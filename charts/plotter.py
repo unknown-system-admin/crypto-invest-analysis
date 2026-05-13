@@ -1,10 +1,21 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
+from typing import Optional
+
+_REQUIRED_OVERLAY_COLS = {"open", "high", "low", "close", "volume",
+                          "SMA_20", "SMA_50", "SMA_200",
+                          "EMA_12", "EMA_26",
+                          "BB_upper", "BB_middle", "BB_lower"}
 
 
-def _subplot_list(subplots: dict, show_rsi=True, show_macd=True,
-                  show_stoch=True, show_obv=True) -> list[tuple[str, pd.DataFrame]]:
+def _get_active_panels(subplots: dict, show_rsi=True, show_macd=True,
+                       show_stoch=True, show_obv=True) -> list:
+    """Build ordered list of (panel_name, dataframe) based on toggle flags.
+
+    Volume is always included as the first panel. Indicator panels are
+    appended if the corresponding show_ flag is True and data exists.
+    """
     panels = [("volume", None)]
     if show_rsi and "rsi" in subplots:
         panels.append(("rsi", subplots["rsi"]))
@@ -21,7 +32,24 @@ def build_chart(overlay: pd.DataFrame, subplots: dict,
                 show_sma=True, show_ema=True, show_bb=True,
                 show_rsi=True, show_macd=True,
                 show_stoch=True, show_obv=True) -> go.Figure:
-    panels = _subplot_list(subplots, show_rsi, show_macd, show_stoch, show_obv)
+    """Build a multi-panel Plotly figure from OHLCV overlay and indicator data.
+
+    Args:
+        overlay: DataFrame with columns open, high, low, close, volume,
+                 SMA_20/50/200, EMA_12/26, BB_upper/middle/lower.
+        subplots: dict with keys "rsi", "macd", "stoch", "obv" mapping to
+                  DataFrames with the indicator's expected columns.
+        show_sma/ema/bb: toggle overlay indicator lines on the price panel.
+        show_rsi/macd/stoch/obv: toggle subplot indicator panels.
+
+    Returns:
+        A Plotly Figure with shared-x subplots, ready for Streamlit rendering.
+    """
+    missing = _REQUIRED_OVERLAY_COLS - set(overlay.columns)
+    if missing:
+        raise ValueError(f"Overlay missing required columns: {sorted(missing)}")
+
+    panels = _get_active_panels(subplots, show_rsi, show_macd, show_stoch, show_obv)
     n_panels = len(panels)
     row_heights = [0.4] + [0.15] * n_panels
 
