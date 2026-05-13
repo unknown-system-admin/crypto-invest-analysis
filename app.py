@@ -28,7 +28,17 @@ def load_data(symbol, timeframe, limit):
     df = fetch_ohlcv(symbol, timeframe, limit)
     return df
 
-df = load_data(symbol, timeframe, limit)
+with st.spinner("Fetching market data..."):
+    try:
+        df = load_data(symbol, timeframe, limit)
+    except (ConnectionError, ValueError, RuntimeError) as e:
+        st.error(f"Failed to fetch data: {e}")
+        st.stop()
+
+if df.empty:
+    st.error("No data returned for the selected symbol and timeframe.")
+    st.stop()
+
 result = compute_all(df)
 
 fig = build_chart(result["overlay"], result["subplots"],
