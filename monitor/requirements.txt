@@ -1,8 +1,8 @@
-fastapi==0.115.0
-uvicorn==0.30.0
-pyyaml==6.0.2
-httpx==0.27.0
-pandas==2.2.0
-ccxt==4.4.0
-ta==0.11.0
-plotly==5.24.0
+fastapi
+uvicorn
+pyyaml
+httpx
+pandas
+ccxt
+ta
+plotly
