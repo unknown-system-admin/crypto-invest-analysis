@@ -1,5 +1,5 @@
 discord:
-  webhook_url: ""
+  webhook_url: "https://discord.com/api/webhooks/1514287474501881907/zR8JbvC9zZnGttbfZU9fePdqMNTiypBbDgiJ4Wdxk8j_S4xx7kk_S7BnnIA9O6onPprd"
 
 symbols: ["BTC/USDT", "SOL/USDT"]
 
