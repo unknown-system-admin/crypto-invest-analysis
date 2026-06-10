@@ -1,5 +1,5 @@
 SYMBOLS = ["BTC/USDT", "SOL/USDT"]
-TIMEFRAMES = ["15m", "1h", "4h", "1d"]
+TIMEFRAMES = ["15m", "1h", "4h", "1d", "1w"]
 DEFAULT_CANDLE_COUNT = 200
 
 SMA_PERIODS = [20, 50, 200]
