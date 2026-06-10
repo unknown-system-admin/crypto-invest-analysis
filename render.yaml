@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: crypto-monitor
+    runtime: docker
+    dockerfilePath: ./Dockerfile.monitor
+    repo: https://github.com/unknown-system-admin/crypto-invest-analysis
+    branch: master
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  - type: web
+    name: crypto-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile.app
+    repo: https://github.com/unknown-system-admin/crypto-invest-analysis
+    branch: master
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
