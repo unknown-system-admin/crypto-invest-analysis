@@ -56,9 +56,9 @@ class RSIThreshold(Strategy):
         val = rsi["RSI"].iloc[-1]
         prev = rsi["RSI"].iloc[-2] if len(rsi) > 1 else val
         if prev >= self.oversold and val < self.oversold:
-            return Signal("偏空", 0.7, self.name)
-        if prev <= self.overbought and val > self.overbought:
             return Signal("偏多", 0.7, self.name)
+        if prev <= self.overbought and val > self.overbought:
+            return Signal("偏空", 0.7, self.name)
         if val <= self.oversold:
             return Signal("偏多", 0.6, self.name)
         if val >= self.overbought:

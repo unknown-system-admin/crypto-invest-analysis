@@ -63,6 +63,22 @@ def test_rsi_overbought_bearish():
     assert sig.direction == "偏空"
 
 
+def test_rsi_cross_into_oversold():
+    rsi_vals = [35, 34, 33, 32, 31, 29]
+    subplots = {"rsi": pd.DataFrame({"RSI": rsi_vals})}
+    s = RSIThreshold(period=14, overbought=70, oversold=30)
+    sig = s.evaluate(_make_overlay(rsi_vals), subplots)
+    assert sig.direction == "偏多"
+
+
+def test_rsi_cross_into_overbought():
+    rsi_vals = [65, 66, 67, 68, 69, 71]
+    subplots = {"rsi": pd.DataFrame({"RSI": rsi_vals})}
+    s = RSIThreshold(period=14, overbought=70, oversold=30)
+    sig = s.evaluate(_make_overlay(rsi_vals), subplots)
+    assert sig.direction == "偏空"
+
+
 def test_macd_bullish_cross():
     macd_vals = [-1, -0.8, -0.6, -0.4, -0.6, 0.1]
     sig_vals = [-0.5, -0.5, -0.5, -0.5, -0.5, -0.5]
