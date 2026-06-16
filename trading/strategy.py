@@ -1,6 +1,7 @@
-from typing import Optional, Callable
 from dataclasses import dataclass
+import abc
 import pandas as pd
+from analysis.summary import analyze_signals
 
 
 @dataclass
@@ -10,11 +11,12 @@ class Signal:
     source: str
 
 
-class Strategy:
+class Strategy(abc.ABC):
     name: str = ""
 
+    @abc.abstractmethod
     def evaluate(self, overlay: pd.DataFrame, subplots: dict) -> Signal:
-        raise NotImplementedError
+        ...
 
 
 class MACross(Strategy):
@@ -93,7 +95,6 @@ class CompositeStrategy(Strategy):
     name = "composite"
 
     def evaluate(self, overlay: pd.DataFrame, subplots: dict) -> Signal:
-        from analysis.summary import analyze_signals
         sig = analyze_signals(overlay, subplots)
         direction = sig.get("direction", "中立")
         total = sig.get("total", 1)
@@ -103,7 +104,9 @@ class CompositeStrategy(Strategy):
         return Signal(direction, confidence, self.name)
 
 
-class CustomComposite:
+class CustomComposite(Strategy):
+    name = "custom_composite"
+
     def __init__(self, strategy_configs: dict, threshold: float = 0.6):
         self.strategies = []
         self.weights = []
@@ -128,10 +131,10 @@ class CustomComposite:
                 self.weights.append(weight)
         self.threshold = threshold
 
-    def evaluate(self, overlay: pd.DataFrame, subplots: dict) -> Optional[Signal]:
+    def evaluate(self, overlay: pd.DataFrame, subplots: dict) -> Signal:
         total_weight = sum(self.weights)
         if total_weight == 0:
-            return None
+            return Signal("中立", 0.0, self.name)
         score_bullish = 0.0
         score_bearish = 0.0
         for s, w in zip(self.strategies, self.weights):
@@ -146,4 +149,4 @@ class CustomComposite:
             return Signal("偏多", bull_ratio, "custom_composite")
         if bear_ratio > self.threshold and bear_ratio > bull_ratio:
             return Signal("偏空", bear_ratio, "custom_composite")
-        return Signal("中立", max(bull_ratio, bear_ratio), "custom_composite")
+        return Signal("中立", max(bull_ratio, bear_ratio), self.name)

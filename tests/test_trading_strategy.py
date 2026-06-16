@@ -124,9 +124,10 @@ def test_custom_composite_ma_only():
     }
     cc = CustomComposite(configs, threshold=0.6)
     close = [100, 101, 102, 103, 104, 105]
-    fast = [101, 102, 103, 104, 105, 106]
+    fast = [103, 103, 103, 103, 102, 104]
     slow = [103, 103, 103, 103, 103, 103]
     overlay = pd.DataFrame({"close": close, "EMA_12": fast, "EMA_26": slow,
                             "SMA_20": close, "SMA_50": close, "SMA_200": close})
     sig = cc.evaluate(overlay, {})
-    assert sig is not None
+    assert sig.direction == "偏多"
+    assert sig.confidence > 0.6
