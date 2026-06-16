@@ -10,3 +10,29 @@ alerts:
     - "08:00"
     - "12:00"
     - "20:00"
+
+trading:
+  mode: "paper"  # "paper" | "live"
+  strategies:
+    ma_cross:
+      enabled: true
+      params: { fast: 12, slow: 26, type: "ema" }
+      weight: 1
+    rsi:
+      enabled: true
+      params: { period: 14, overbought: 70, oversold: 30 }
+      weight: 1
+    macd:
+      enabled: false
+      params: { fast: 12, slow: 26, signal: 9 }
+      weight: 1
+    composite:
+      enabled: true
+      params: {}
+      weight: 2
+  risk:
+    max_position_pct: 25
+    min_bars_hold: 1
+    max_daily_trades: 10
+    max_drawdown_stop: 30
+    signal_threshold: 0.6

@@ -7,6 +7,10 @@ from data.fetcher import fetch_ohlcv
 from indicators.calculator import compute_all
 from analysis.summary import analyze_signals, generate_market_summary
 from analysis.multi_tf import analyze_multi_timeframe
+from trading.strategy import CustomComposite
+from trading.portfolio import PortfolioStore, calculate_position_size
+from trading.executor import PaperExecutor, LiveExecutor
+from trading.config import DEFAULT_RISK
 from monitor.state import load_state, save_state, RECORD_PATH
 from monitor.checker import check_reversal, check_strong_signal
 from monitor.notifier import (
@@ -78,6 +82,73 @@ def check():
                 new_sig["last_strong_notified"] = strong["direction"]
             except Exception:
                 pass
+
+        # Level 3: trading strategy evaluation
+        trading_cfg = CONFIG.get("trading", {})
+        if trading_cfg.get("strategies"):
+            mode = trading_cfg.get("mode", "paper")
+            risk = trading_cfg.get("risk", DEFAULT_RISK)
+            threshold = risk.get("signal_threshold", 0.6)
+
+            strategy = CustomComposite(trading_cfg["strategies"], threshold=threshold)
+            store = PortfolioStore()
+            portfolio = store.load()
+
+            signal = strategy.evaluate(result["overlay"], result["subplots"])
+            if signal and signal.direction != "中立":
+                current_price = float(result["overlay"]["close"].iloc[-1])
+                has_pos = any(p.symbol == symbol for p in portfolio.positions)
+
+                if mode == "live":
+                    import ccxt
+                    exchange = ccxt.binance()
+                    executor = LiveExecutor(portfolio, exchange=exchange)
+                else:
+                    executor = PaperExecutor(portfolio)
+
+                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                daily_count = sum(1 for o in portfolio.orders if o.timestamp.startswith(today_str))
+
+                if signal.direction == "偏多" and not has_pos and executor.can_trade(symbol, daily_count, risk.get("max_daily_trades", 10)):
+                    qty = calculate_position_size(portfolio.cash, current_price, risk.get("max_position_pct", 25))
+                    if qty > 0:
+                        order = executor.execute_buy(symbol, current_price, qty)
+                        embed = {
+                            "embeds": [{
+                                "title": f"🟢 {symbol} 買入訊號",
+                                "description": f"價格: ${current_price:,.2f}\n數量: {qty}\n信心: {signal.confidence:.0%}",
+                                "color": 0x00FF00,
+                            }]
+                        }
+                        try:
+                            send_webhook(webhook, embed)
+                            alerts_sent.append(f"{symbol}: BUY signal")
+                        except Exception:
+                            pass
+
+                elif signal.direction == "偏空" and has_pos and executor.can_trade(symbol, daily_count, risk.get("max_daily_trades", 10)):
+                    pos_list = [p for p in portfolio.positions if p.symbol == symbol]
+                    if pos_list:
+                        pos = pos_list[0]
+                        order = executor.execute_sell(symbol, current_price, pos.quantity)
+                        if order:
+                            embed = {
+                                "embeds": [{
+                                    "title": f"🔴 {symbol} 賣出訊號",
+                                    "description": f"價格: ${current_price:,.2f}\n數量: {pos.quantity}\n損益: ${order.pnl:+.2f} ({order.pnl_pct:+.2f}%)",
+                                    "color": 0xFF0000,
+                                }]
+                            }
+                            try:
+                                send_webhook(webhook, embed)
+                                alerts_sent.append(f"{symbol}: SELL signal (PnL: ${order.pnl:+.2f})")
+                            except Exception:
+                                pass
+
+                for p in portfolio.positions:
+                    p.update_market(current_price)
+
+                store.save(portfolio)
 
         today_state[symbol] = new_sig
 
