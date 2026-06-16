@@ -7,12 +7,14 @@ def test_position_update_market_long():
     p = Position(symbol="BTC/USDT", side="long", quantity=1.0, entry_price=50000, current_price=50000)
     p.update_market(55000)
     assert p.unrealized_pnl == 5000.0
+    assert p.unrealized_pnl_pct > 0
 
 
 def test_position_update_market_short():
     p = Position(symbol="BTC/USDT", side="short", quantity=1.0, entry_price=50000, current_price=50000)
     p.update_market(45000)
     assert p.unrealized_pnl == 5000.0
+    assert p.unrealized_pnl_pct > 0
 
 
 def test_portfolio_equity():
@@ -25,17 +27,22 @@ def test_portfolio_equity():
 
 def test_portfolio_roundtrip(tmp_path):
     pos = Position(symbol="BTC/USDT", side="long", quantity=1.0, entry_price=50000, current_price=55000)
-    pf = Portfolio(cash=10000, positions=[pos], orders=[])
+    o = Order(id="1", symbol="BTC/USDT", side="sell", quantity=1.0, price=55000, fee=10, timestamp="now", status="filled", pnl=5000, pnl_pct=10.0)
+    pf = Portfolio(cash=10000, positions=[pos], orders=[o])
     store = PortfolioStore(tmp_path / "state.json")
     store.save(pf)
     loaded = store.load()
     assert loaded.cash == 10000
     assert len(loaded.positions) == 1
     assert loaded.positions[0].symbol == "BTC/USDT"
+    assert loaded.positions[0].side == "long"
+    assert loaded.positions[0].entry_price == 50000
+    assert len(loaded.orders) == 1
+    assert loaded.orders[0].pnl == 5000
 
 
 def test_calculate_position_size():
-    qty = calculate_position_size(10000, 50000, 25)
+    qty = calculate_position_size(10000.0, 50000.0, 25.0)
     assert qty == 0.05
 
 

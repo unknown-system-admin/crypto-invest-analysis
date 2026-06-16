@@ -1,5 +1,5 @@
 from dataclasses import dataclass, asdict
-from typing import Optional
+from typing import Literal
 from datetime import datetime
 import json
 from pathlib import Path
@@ -9,12 +9,12 @@ from pathlib import Path
 class Order:
     id: str
     symbol: str
-    side: str  # "buy" | "sell"
+    side: Literal["buy", "sell"]
     quantity: float
     price: float
     fee: float
     timestamp: str
-    status: str  # "filled" | "pending" | "cancelled"
+    status: Literal["filled", "pending", "cancelled"]
     pnl: float = 0.0
     pnl_pct: float = 0.0
 
@@ -41,8 +41,8 @@ class Position:
 @dataclass
 class Portfolio:
     cash: float
-    positions: list
-    orders: list
+    positions: list[Position]
+    orders: list[Order]
     total_deposits: float = 0.0
     total_withdrawals: float = 0.0
 
