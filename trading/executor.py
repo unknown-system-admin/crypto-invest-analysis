@@ -2,7 +2,7 @@ from typing import Optional
 from datetime import datetime, timezone
 import uuid
 
-from trading.portfolio import Portfolio, Position, Order, calculate_position_size
+from trading.portfolio import Portfolio, Position, Order
 
 SLIPPAGE_RATE = 0.0005  # 0.05%
 
@@ -85,19 +85,30 @@ class LiveExecutor:
                 return self.paper.execute_buy(symbol, price, quantity)
         else:
             return self.paper.execute_buy(symbol, price, quantity)
+        existing = [p for p in self.portfolio.positions if p.symbol == symbol and p.side == "long"]
+        if existing:
+            pos = existing[0]
+            total_qty = pos.quantity + filled
+            total_cost = pos.entry_price * pos.quantity + fill_price * filled
+            pos.entry_price = total_cost / total_qty
+            pos.quantity = total_qty
+        else:
+            self.portfolio.positions.append(Position(
+                symbol=symbol, side="long", quantity=filled,
+                entry_price=fill_price, current_price=fill_price,
+            ))
+        self.portfolio.cash -= (fill_price * filled + fee)
         order_obj = Order(
             id=str(order.get("id", uuid.uuid4()))[:8], symbol=symbol, side="buy",
             quantity=filled, price=fill_price, fee=fee,
             timestamp=datetime.now(timezone.utc).isoformat(),
             status="filled",
         )
-        self.portfolio.cash -= (fill_price * filled + fee)
-        self.portfolio.positions.append(Position(
-            symbol=symbol, side="long", quantity=filled,
-            entry_price=fill_price, current_price=fill_price,
-        ))
         self.portfolio.orders.append(order_obj)
         return order_obj
+
+    def execute_sell(self, symbol: str, price: float, quantity: float) -> Optional[Order]:
+        return self.paper.execute_sell(symbol, price, quantity)
 
     def can_trade(self, symbol: str, daily_count: int, max_daily: int = 10) -> bool:
         return daily_count < max_daily
