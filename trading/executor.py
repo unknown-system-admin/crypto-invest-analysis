@@ -8,15 +8,15 @@ SLIPPAGE_RATE = 0.0005  # 0.05%
 
 
 class PaperExecutor:
-    def __init__(self, portfolio: Portfolio, slippage: float = SLIPPAGE_RATE):
+    def __init__(self, portfolio: Portfolio, slippage: float = SLIPPAGE_RATE, fee_rate: float = 0.001):
         self.portfolio = portfolio
         self.slippage = slippage
+        self.fee_rate = fee_rate
 
     def execute_buy(self, symbol: str, price: float, quantity: float) -> Order:
-        fee_rate = 0.001
         fill_price = price * (1 + self.slippage)
         cost = fill_price * quantity
-        fee = cost * fee_rate
+        fee = cost * self.fee_rate
         self.portfolio.cash -= (cost + fee)
         existing = [p for p in self.portfolio.positions if p.symbol == symbol and p.side == "long"]
         if existing:
@@ -43,10 +43,9 @@ class PaperExecutor:
         pos = next((p for p in self.portfolio.positions if p.symbol == symbol and p.side == "long"), None)
         if not pos or pos.quantity < quantity:
             return None
-        fee_rate = 0.001
         fill_price = price * (1 - self.slippage)
         revenue = fill_price * quantity
-        fee = revenue * fee_rate
+        fee = revenue * self.fee_rate
         cost_basis = pos.entry_price * quantity
         pnl = revenue - cost_basis - fee
         pnl_pct = (pnl / cost_basis) * 100

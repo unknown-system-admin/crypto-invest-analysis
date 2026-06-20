@@ -58,7 +58,7 @@ def _run_single_simulation(
 ) -> SweepResult:
     strategy = CustomComposite(strategy_configs, threshold=signal_threshold)
     portfolio = Portfolio(cash=config.initial_capital, positions=[], orders=[])
-    executor = PaperExecutor(portfolio, slippage=config.slippage)
+    executor = PaperExecutor(portfolio, slippage=config.slippage, fee_rate=config.fee_rate)
 
     equity_curve = []
     trades_log = []
@@ -128,7 +128,7 @@ def _run_single_simulation(
 
     final_equity = portfolio.total_equity
     total_return = ((final_equity - config.initial_capital) / config.initial_capital) * 100 if config.initial_capital > 0 else 0.0
-    total_days = len(equity_curve)
+    total_days = max((overlay.index[-1] - overlay.index[0]).days, 1)
     cagr = ((final_equity / config.initial_capital) ** (365 / max(total_days, 1)) - 1) * 100 if config.initial_capital > 0 and total_days > 0 else 0.0
 
     equity_series = pd.Series(equity_curve)
@@ -176,7 +176,6 @@ def run_parameter_sweep(
     total = (len(weight_values) ** n_strategies) * len(thresholds)
     count = 0
     results = []
-    best_return = -float("inf")
 
     for weights in itertools.product(weight_values, repeat=n_strategies):
         for thresh in thresholds:
@@ -194,9 +193,6 @@ def run_parameter_sweep(
                 **{f"{sname}_weight": int(weights[j]) for j, sname in enumerate(config.strategy_order)},
                 "threshold": thresh,
             }
-
-            if sr.total_return_pct > best_return:
-                best_return = sr.total_return_pct
 
             results.append(sr)
             count += 1
