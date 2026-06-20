@@ -453,11 +453,19 @@ def _single_backtest_ui():
         st.info("請在左側設定參數後點擊「開始回測」")
 
 def _optimizer_ui():
-    st.title("⚡ 參數優化 — 權重掃描")
+    st.title("⚡ 參數優化")
+    opt_mode = st.radio("優化模式", ["權重掃描", "RSI 參數掃描"], horizontal=True, label_visibility="collapsed")
+    if opt_mode == "權重掃描":
+        _weight_sweep_ui()
+    else:
+        _rsi_sweep_ui()
+
+
+def _weight_sweep_ui():
     st.markdown("---")
 
     from trading.optimizer import ParamSweepConfig, SweepResult, run_parameter_sweep
-    from trading.optimizer import save_sweep_results, list_sweep_result_files
+    from trading.optimizer import save_sweep_results
     from trading.config import DEFAULT_STRATEGIES
 
     with st.sidebar:
@@ -523,6 +531,70 @@ def _optimizer_ui():
         _display_optimizer_results(results, config)
 
 
+def _rsi_sweep_ui():
+    st.markdown("---")
+    from trading.optimizer import RsiSweepConfig, RsiSweepResult, run_rsi_sweep, save_sweep_results
+
+    with st.sidebar:
+        st.header("RSI 參數設定")
+        symbol = st.selectbox("交易對", ["BTC/USDT", "SOL/USDT"], key="rsi_symbol")
+        tf = st.selectbox("時間框架", ["1h", "4h", "1d"], index=1, key="rsi_tf")
+        lookback = st.slider("回測K線數", 200, 2000, 500, key="rsi_lookback")
+        capital = st.number_input("初始資金 ($)", 1000, 100000, 10000, step=1000, key="rsi_capital")
+
+        st.subheader("Period")
+        p_min, p_max = st.select_slider("Period", options=[7, 9, 11, 13, 14, 15, 17, 19, 21],
+                                         value=(7, 21), key="rsi_period")
+
+        st.subheader("Overbought")
+        ob_min, ob_max = st.select_slider("Overbought (> Oversold)", options=[65, 70, 75, 80, 85],
+                                           value=(65, 85), key="rsi_ob")
+
+        st.subheader("Oversold")
+        os_min, os_max = st.select_slider("Oversold (< Overbought)", options=[15, 20, 25, 30, 35],
+                                           value=(15, 35), key="rsi_os")
+
+        start_btn = st.button("🚀 開始 RSI 優化", type="primary", use_container_width=True)
+
+    if start_btn:
+        period_list = [v for v in [7, 9, 11, 13, 14, 15, 17, 19, 21] if p_min <= v <= p_max]
+        ob_list = [v for v in [65, 70, 75, 80, 85] if ob_min <= v <= ob_max]
+        os_list = [v for v in [15, 20, 25, 30, 35] if os_min <= v <= os_max]
+
+        config = RsiSweepConfig(
+            symbol=symbol, timeframe=tf, limit=lookback,
+            initial_capital=float(capital),
+            period_values=period_list, ob_values=ob_list, os_values=os_list,
+        )
+
+        total_combos = sum(1 for p in period_list for ob in ob_list for os in os_list if os < ob)
+        st.info(f"測試組合共 **{total_combos:,}** 組")
+
+        progress_bar = st.progress(0, text="初始化...")
+        best_text = st.empty()
+        all_results = []
+
+        def on_progress(cur, total, latest):
+            progress_bar.progress(cur / total, text=f"{cur}/{total}")
+            if latest:
+                all_results.append(latest)
+                best = max(all_results, key=lambda r: r.total_return_pct)
+                best_text.text(f"當前最佳報酬: {best.total_return_pct:+.2f}%  "
+                               f"(Sharpe: {best.sharpe_ratio:.2f}  DD: {best.max_drawdown_pct:.1f}%)")
+
+        try:
+            results = run_rsi_sweep(config, on_progress)
+        except Exception as e:
+            st.error(f"優化失敗: {e}")
+            return
+
+        progress_bar.empty()
+        st.success(f"✅ 完成！共測試 {len(results):,} 組")
+        save_path = save_sweep_results(results, config)
+        st.caption(f"結果已儲存: {save_path}")
+        _display_rsi_results(results, config)
+
+
 def _display_optimizer_results(results, config):
     st.subheader("🏆 Top 30 最佳參數")
     top = results[:30]
@@ -583,6 +655,58 @@ def _apply_best_params(best, config):
         yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
 
     st.success("✅ 最佳參數已套用至 monitor/config.yaml")
+
+
+def _display_rsi_results(results, config):
+    st.subheader("🏆 Top 30 最佳參數")
+    top = results[:30]
+    rows = []
+    for i, r in enumerate(top):
+        p = r.params
+        rows.append({
+            "排名": i + 1,
+            "Period": p.get("period", "-"),
+            "Overbought": p.get("overbought", "-"),
+            "Oversold": p.get("oversold", "-"),
+            "報酬率": f"{r.total_return_pct:+.2f}%",
+            "Sharpe": f"{r.sharpe_ratio:.2f}",
+            "MaxDD": f"{r.max_drawdown_pct:.2f}%",
+            "勝率": f"{r.win_rate:.1f}%",
+            "交易": r.total_trades,
+        })
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    st.subheader("最佳參數詳情")
+    st.json(results[0].to_dict())
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ 套用最佳參數", type="primary", use_container_width=True):
+            _apply_rsi_params(results[0])
+    with col2:
+        st.download_button(
+            "📥 下載完整結果 CSV",
+            data=pd.DataFrame([r.to_dict() for r in results]).to_csv(index=False).encode(),
+            file_name=f"rsi_sweep_{config.symbol.replace('/','_')}_{config.timeframe}.csv",
+            mime="text/csv", use_container_width=True,
+        )
+
+
+def _apply_rsi_params(best):
+    import yaml
+    from pathlib import Path
+    config_path = Path(__file__).parent / "monitor" / "config.yaml"
+    with open(config_path) as f:
+        cfg = yaml.safe_load(f)
+    p = best.params
+    strategies = cfg.setdefault("trading", {}).setdefault("strategies", {})
+    rsi_cfg = strategies.setdefault("rsi", {})
+    rsi_cfg["params"] = {"period": p["period"], "overbought": p["overbought"], "oversold": p["oversold"]}
+    rsi_cfg["enabled"] = True
+    rsi_cfg["weight"] = 1
+    with open(config_path, "w") as f:
+        yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+    st.success("✅ RSI 參數已套用至 monitor/config.yaml")
 
 
 def portfolio_page():
