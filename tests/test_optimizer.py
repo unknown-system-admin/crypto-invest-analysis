@@ -3,6 +3,9 @@ import numpy as np
 from trading.optimizer import (
     ParamSweepConfig,
     SweepResult,
+    RsiSweepConfig,
+    RsiSweepResult,
+    run_rsi_sweep,
     _run_single_simulation,
 )
 
@@ -88,3 +91,29 @@ def test_sweep_result_to_dict():
     d = sr.to_dict()
     assert d["total_return_pct"] == 15.5
     assert d["params"]["threshold"] == 0.6
+
+
+def test_rsi_sweep_result_to_dict():
+    sr = RsiSweepResult(
+        params={"period": 14, "overbought": 70, "oversold": 30},
+        total_return_pct=5.2, sharpe_ratio=0.8, max_drawdown_pct=3.0,
+        win_rate=60.0, total_trades=20, final_equity=10500.0, cagr=8.0,
+    )
+    d = sr.to_dict()
+    assert d["total_return_pct"] == 5.2
+    assert d["params"]["period"] == 14
+
+
+def test_rsi_sweep_invalid_combos_skipped():
+    from trading.optimizer import _run_single_simulation
+    from tests.test_optimizer import _make_indicator_data
+    overlay, subplots = _make_indicator_data(length=200)
+    config = RsiSweepConfig()
+    strategy_configs = {
+        "ma_cross": {"enabled": False, "params": {}, "weight": 0},
+        "rsi": {"enabled": False, "params": {}, "weight": 0},
+        "macd": {"enabled": False, "params": {}, "weight": 0},
+        "composite": {"enabled": False, "params": {}, "weight": 0},
+    }
+    sr = _run_single_simulation(overlay, subplots, strategy_configs, 0.5, config)
+    assert sr.total_trades == 0
