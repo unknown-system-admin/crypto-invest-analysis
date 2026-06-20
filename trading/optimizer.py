@@ -49,6 +49,35 @@ class SweepResult:
         return asdict(self)
 
 
+@dataclass
+class RsiSweepConfig:
+    symbol: str = "BTC/USDT"
+    timeframe: str = "4h"
+    limit: int = 500
+    initial_capital: float = 10000.0
+    fee_rate: float = 0.001
+    slippage: float = 0.0005
+    risk_config: dict = field(default_factory=lambda: DEFAULT_RISK.copy())
+    period_values: list = field(default_factory=lambda: [7, 9, 11, 13, 14, 15, 17, 19, 21])
+    ob_values: list = field(default_factory=lambda: [65, 70, 75, 80, 85])
+    os_values: list = field(default_factory=lambda: [15, 20, 25, 30, 35])
+
+
+@dataclass
+class RsiSweepResult:
+    params: dict
+    total_return_pct: float
+    sharpe_ratio: float
+    max_drawdown_pct: float
+    win_rate: float
+    total_trades: int
+    final_equity: float
+    cagr: float
+
+    def to_dict(self):
+        return asdict(self)
+
+
 def _run_single_simulation(
     overlay: pd.DataFrame,
     subplots: dict,
@@ -198,6 +227,47 @@ def run_parameter_sweep(
             count += 1
             if progress_callback:
                 progress_callback(count, total, sr)
+
+    results.sort(key=lambda r: r.total_return_pct, reverse=True)
+    return results
+
+
+def run_rsi_sweep(
+    config: RsiSweepConfig,
+    progress_callback: Optional[Callable[[int, int, Optional[RsiSweepResult]], None]] = None,
+) -> list[RsiSweepResult]:
+    df = fetch_ohlcv(config.symbol, timeframe=config.timeframe, limit=config.limit)
+    if df.empty:
+        raise ValueError(f"No data for {config.symbol} {config.timeframe}")
+    result = compute_all(df)
+    overlay = result["overlay"]
+    subplots = result["subplots"]
+
+    combos = []
+    for period in config.period_values:
+        for ob in config.ob_values:
+            for os in config.os_values:
+                if os >= ob:
+                    continue
+                combos.append((period, ob, os))
+
+    total = len(combos)
+    results = []
+    count = 0
+
+    for period, ob, os in combos:
+        strategy_configs = {
+            "ma_cross": {"enabled": False, "params": {}, "weight": 0},
+            "rsi": {"enabled": True, "params": {"period": period, "overbought": ob, "oversold": os}, "weight": 1},
+            "macd": {"enabled": False, "params": {}, "weight": 0},
+            "composite": {"enabled": False, "params": {}, "weight": 0},
+        }
+        sr = _run_single_simulation(overlay, subplots, strategy_configs, 0.5, config)
+        sr.params = {"period": period, "overbought": ob, "oversold": os}
+        results.append(sr)
+        count += 1
+        if progress_callback:
+            progress_callback(count, total, sr)
 
     results.sort(key=lambda r: r.total_return_pct, reverse=True)
     return results
