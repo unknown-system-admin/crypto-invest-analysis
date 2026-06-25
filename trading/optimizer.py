@@ -78,6 +78,34 @@ class RsiSweepResult:
         return asdict(self)
 
 
+@dataclass
+class MaSweepConfig:
+    symbol: str = "BTC/USDT"
+    timeframe: str = "4h"
+    limit: int = 500
+    initial_capital: float = 10000.0
+    fee_rate: float = 0.001
+    slippage: float = 0.0005
+    risk_config: dict = field(default_factory=lambda: DEFAULT_RISK.copy())
+    fast_values: list = field(default_factory=lambda: [5, 8, 10, 12, 15, 20])
+    slow_values: list = field(default_factory=lambda: [20, 26, 30, 40, 50, 60])
+
+
+@dataclass
+class MaSweepResult:
+    params: dict
+    total_return_pct: float
+    sharpe_ratio: float
+    max_drawdown_pct: float
+    win_rate: float
+    total_trades: int
+    final_equity: float
+    cagr: float
+
+    def to_dict(self):
+        return asdict(self)
+
+
 def _run_single_simulation(
     overlay: pd.DataFrame,
     subplots: dict,
@@ -264,6 +292,46 @@ def run_rsi_sweep(
         }
         sr = _run_single_simulation(overlay, subplots, strategy_configs, 0.5, config)
         sr.params = {"period": period, "overbought": ob, "oversold": os}
+        results.append(sr)
+        count += 1
+        if progress_callback:
+            progress_callback(count, total, sr)
+
+    results.sort(key=lambda r: r.total_return_pct, reverse=True)
+    return results
+
+
+def run_ma_sweep(
+    config: MaSweepConfig,
+    progress_callback: Optional[Callable[[int, int, Optional[MaSweepResult]], None]] = None,
+) -> list[MaSweepResult]:
+    df = fetch_ohlcv(config.symbol, timeframe=config.timeframe, limit=config.limit)
+    if df.empty:
+        raise ValueError(f"No data for {config.symbol} {config.timeframe}")
+    result = compute_all(df)
+    overlay = result["overlay"]
+    subplots = result["subplots"]
+
+    combos = []
+    for fast in config.fast_values:
+        for slow in config.slow_values:
+            if fast >= slow:
+                continue
+            combos.append((fast, slow))
+
+    total = len(combos)
+    results = []
+    count = 0
+
+    for fast, slow in combos:
+        strategy_configs = {
+            "ma_cross": {"enabled": True, "params": {"fast": fast, "slow": slow, "type": "ema"}, "weight": 1},
+            "rsi": {"enabled": False, "params": {}, "weight": 0},
+            "macd": {"enabled": False, "params": {}, "weight": 0},
+            "composite": {"enabled": False, "params": {}, "weight": 0},
+        }
+        sr = _run_single_simulation(overlay, subplots, strategy_configs, 0.5, config)
+        sr.params = {"fast": fast, "slow": slow}
         results.append(sr)
         count += 1
         if progress_callback:
