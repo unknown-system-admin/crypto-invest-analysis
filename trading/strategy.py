@@ -104,6 +104,35 @@ class CompositeStrategy(Strategy):
         return Signal(direction, confidence, self.name)
 
 
+class RSITrendFilter(Strategy):
+    name = "rsi_trend_filter"
+
+    def __init__(self, period: int = 14, overbought: int = 70, oversold: int = 30,
+                 trend_period: int = 50, trend_type: str = "sma"):
+        self.rsi = RSIThreshold(period, overbought, oversold)
+        self.trend_period = trend_period
+        self.trend_type = trend_type
+
+    def evaluate(self, overlay: pd.DataFrame, subplots: dict) -> Signal:
+        sig = self.rsi.evaluate(overlay, subplots)
+        if sig.direction == "中立":
+            return sig
+        close = overlay["close"]
+        if self.trend_type == "ema":
+            ma = close.ewm(span=self.trend_period).mean()
+        else:
+            ma = close.rolling(window=self.trend_period).mean()
+        current_close = close.iloc[-1]
+        current_ma = ma.iloc[-1]
+        if pd.isna(current_ma):
+            return Signal("中立", 0.0, self.name)
+        if sig.direction == "偏多" and current_close < current_ma:
+            return Signal("中立", 0.0, self.name)
+        if sig.direction == "偏空" and current_close > current_ma:
+            return Signal("中立", 0.0, self.name)
+        return sig
+
+
 class CustomComposite(Strategy):
     name = "custom_composite"
 
@@ -113,6 +142,7 @@ class CustomComposite(Strategy):
         strategy_map = {
             "ma_cross": MACross,
             "rsi": RSIThreshold,
+            "rsi_trend": RSITrendFilter,
             "macd": MACDCross,
             "composite": CompositeStrategy,
         }
