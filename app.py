@@ -454,11 +454,13 @@ def _single_backtest_ui():
 
 def _optimizer_ui():
     st.title("⚡ 參數優化")
-    opt_mode = st.radio("優化模式", ["權重掃描", "RSI 參數掃描"], horizontal=True, label_visibility="collapsed")
+    opt_mode = st.radio("優化模式", ["權重掃描", "RSI 參數掃描", "MA 參數掃描"], horizontal=True, label_visibility="collapsed")
     if opt_mode == "權重掃描":
         _weight_sweep_ui()
-    else:
+    elif opt_mode == "RSI 參數掃描":
         _rsi_sweep_ui()
+    else:
+        _ma_sweep_ui()
 
 
 def _weight_sweep_ui():
@@ -595,6 +597,65 @@ def _rsi_sweep_ui():
         _display_rsi_results(results, config)
 
 
+def _ma_sweep_ui():
+    st.markdown("---")
+    from trading.optimizer import MaSweepConfig, MaSweepResult, run_ma_sweep, save_sweep_results
+
+    with st.sidebar:
+        st.header("MA 參數設定")
+        symbol = st.selectbox("交易對", ["BTC/USDT", "SOL/USDT"], key="ma_symbol")
+        tf = st.selectbox("時間框架", ["1h", "4h", "1d"], index=1, key="ma_tf")
+        lookback = st.slider("回測K線數", 200, 2000, 500, key="ma_lookback")
+        capital = st.number_input("初始資金 ($)", 1000, 100000, 10000, step=1000, key="ma_capital")
+
+        st.subheader("快線 (Fast MA)")
+        f_min, f_max = st.select_slider("Fast Period", options=[5, 8, 10, 12, 15, 20],
+                                         value=(5, 20), key="ma_fast")
+
+        st.subheader("慢線 (Slow MA > Fast)")
+        s_min, s_max = st.select_slider("Slow Period", options=[20, 26, 30, 40, 50, 60],
+                                         value=(20, 60), key="ma_slow")
+
+        start_btn = st.button("🚀 開始 MA 優化", type="primary", use_container_width=True)
+
+    if start_btn:
+        fast_list = [v for v in [5, 8, 10, 12, 15, 20] if f_min <= v <= f_max]
+        slow_list = [v for v in [20, 26, 30, 40, 50, 60] if s_min <= v <= s_max]
+
+        config = MaSweepConfig(
+            symbol=symbol, timeframe=tf, limit=lookback,
+            initial_capital=float(capital),
+            fast_values=fast_list, slow_values=slow_list,
+        )
+
+        total_combos = sum(1 for f in fast_list for s in slow_list if f < s)
+        st.info(f"測試組合共 **{total_combos:,}** 組")
+
+        progress_bar = st.progress(0, text="初始化...")
+        best_text = st.empty()
+        all_results = []
+
+        def on_progress(cur, total, latest):
+            progress_bar.progress(cur / total, text=f"{cur}/{total}")
+            if latest:
+                all_results.append(latest)
+                best = max(all_results, key=lambda r: r.total_return_pct)
+                best_text.text(f"當前最佳報酬: {best.total_return_pct:+.2f}%  "
+                               f"(Sharpe: {best.sharpe_ratio:.2f}  DD: {best.max_drawdown_pct:.1f}%)")
+
+        try:
+            results = run_ma_sweep(config, on_progress)
+        except Exception as e:
+            st.error(f"優化失敗: {e}")
+            return
+
+        progress_bar.empty()
+        st.success(f"✅ 完成！共測試 {len(results):,} 組")
+        save_path = save_sweep_results(results, config)
+        st.caption(f"結果已儲存: {save_path}")
+        _display_ma_results(results, config)
+
+
 def _display_optimizer_results(results, config):
     st.subheader("🏆 Top 30 最佳參數")
     top = results[:30]
@@ -707,6 +768,57 @@ def _apply_rsi_params(best):
     with open(config_path, "w") as f:
         yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
     st.success("✅ RSI 參數已套用至 monitor/config.yaml")
+
+
+def _display_ma_results(results, config):
+    st.subheader("🏆 Top 30 最佳參數")
+    top = results[:30]
+    rows = []
+    for i, r in enumerate(top):
+        p = r.params
+        rows.append({
+            "排名": i + 1,
+            "Fast": p.get("fast", "-"),
+            "Slow": p.get("slow", "-"),
+            "報酬率": f"{r.total_return_pct:+.2f}%",
+            "Sharpe": f"{r.sharpe_ratio:.2f}",
+            "MaxDD": f"{r.max_drawdown_pct:.2f}%",
+            "勝率": f"{r.win_rate:.1f}%",
+            "交易": r.total_trades,
+        })
+    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    st.subheader("最佳參數詳情")
+    st.json(results[0].to_dict())
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ 套用最佳參數", type="primary", use_container_width=True):
+            _apply_ma_params(results[0])
+    with col2:
+        st.download_button(
+            "📥 下載完整結果 CSV",
+            data=pd.DataFrame([r.to_dict() for r in results]).to_csv(index=False).encode(),
+            file_name=f"ma_sweep_{config.symbol.replace('/','_')}_{config.timeframe}.csv",
+            mime="text/csv", use_container_width=True,
+        )
+
+
+def _apply_ma_params(best):
+    import yaml
+    from pathlib import Path
+    config_path = Path(__file__).parent / "monitor" / "config.yaml"
+    with open(config_path) as f:
+        cfg = yaml.safe_load(f)
+    p = best.params
+    strategies = cfg.setdefault("trading", {}).setdefault("strategies", {})
+    ma_cfg = strategies.setdefault("ma_cross", {})
+    ma_cfg["params"] = {"fast": p["fast"], "slow": p["slow"], "type": "ema"}
+    ma_cfg["enabled"] = True
+    ma_cfg["weight"] = 1
+    with open(config_path, "w") as f:
+        yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True)
+    st.success("✅ MA 參數已套用至 monitor/config.yaml")
 
 
 def portfolio_page():
