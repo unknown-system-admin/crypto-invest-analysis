@@ -5,6 +5,8 @@ from trading.optimizer import (
     SweepResult,
     RsiSweepConfig,
     RsiSweepResult,
+    MaSweepConfig,
+    MaSweepResult,
     run_rsi_sweep,
     _run_single_simulation,
 )
@@ -109,6 +111,39 @@ def test_rsi_sweep_invalid_combos_skipped():
     from tests.test_optimizer import _make_indicator_data
     overlay, subplots = _make_indicator_data(length=200)
     config = RsiSweepConfig()
+    strategy_configs = {
+        "ma_cross": {"enabled": False, "params": {}, "weight": 0},
+        "rsi": {"enabled": False, "params": {}, "weight": 0},
+        "macd": {"enabled": False, "params": {}, "weight": 0},
+        "composite": {"enabled": False, "params": {}, "weight": 0},
+    }
+    sr = _run_single_simulation(overlay, subplots, strategy_configs, 0.5, config)
+    assert sr.total_trades == 0
+
+
+def test_ma_sweep_result_to_dict():
+    sr = MaSweepResult(
+        params={"fast": 5, "slow": 20},
+        total_return_pct=3.5, sharpe_ratio=0.6, max_drawdown_pct=5.0,
+        win_rate=45.0, total_trades=15, final_equity=10350.0, cagr=5.0,
+    )
+    d = sr.to_dict()
+    assert d["total_return_pct"] == 3.5
+    assert d["params"]["fast"] == 5
+
+
+def test_ma_sweep_config_defaults():
+    cfg = MaSweepConfig()
+    assert 5 in cfg.fast_values
+    assert 20 in cfg.slow_values
+    assert cfg.symbol == "BTC/USDT"
+
+
+def test_ma_sweep_invalid_combos_skipped():
+    from trading.optimizer import _run_single_simulation
+    from tests.test_optimizer import _make_indicator_data
+    overlay, subplots = _make_indicator_data(length=200)
+    config = MaSweepConfig()
     strategy_configs = {
         "ma_cross": {"enabled": False, "params": {}, "weight": 0},
         "rsi": {"enabled": False, "params": {}, "weight": 0},
