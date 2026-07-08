@@ -17,7 +17,7 @@ def analyze_multi_timeframe(symbol: str) -> list:
         try:
             df = fetch_ohlcv(symbol, tf, limit=200)
         except Exception:
-            results.append({"tf": tf, "label": TF_LABELS.get(tf, tf), "error": True})
+            results.append({"tf": tf, "label": TF_LABELS.get(tf, tf), "direction": "N/A", "error": True})
             continue
 
         result = compute_all(df)
