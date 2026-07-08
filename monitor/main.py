@@ -157,33 +157,76 @@ def check():
     return {"status": "ok", "alerts": alerts_sent, "time": datetime.now(timezone.utc).isoformat()}
 
 
+@app.get("/check_debug")
+def check_debug():
+    cfg = CONFIG["alerts"]
+    errors = []
+    for symbol in CONFIG["symbols"]:
+        try:
+            result = _process_symbol(symbol)
+        except Exception as e:
+            errors.append(f"{symbol}: {e}")
+            continue
+        try:
+            from analysis.summary import generate_market_summary
+            summary = generate_market_summary(result["overlay"], result["subplots"])
+            errors.append(f"{symbol}: summary OK, {len(summary)} keys")
+        except Exception as e:
+            errors.append(f"{symbol}: summary failed: {e}")
+        try:
+            from analysis.multi_tf import analyze_multi_timeframe
+            tf = analyze_multi_timeframe(symbol)
+            errors.append(f"{symbol}: multi_tf OK, {len(tf)} keys")
+        except Exception as e:
+            errors.append(f"{symbol}: multi_tf failed: {e}")
+        try:
+            from monitor.notifier import build_report_embed
+            embed = build_report_embed(symbol, {}, {})
+            errors.append(f"{symbol}: embed builder OK")
+        except Exception as e:
+            errors.append(f"{symbol}: embed builder failed: {e}")
+    return {"errors": errors, "time": datetime.now(timezone.utc).isoformat()}
+
+
 @app.get("/report")
 def report():
     cfg = CONFIG["alerts"]
     webhook = CONFIG["discord"]["webhook_url"]
     reports_sent = []
+    errors = []
 
     for symbol in CONFIG["symbols"]:
         try:
             result = _process_symbol(symbol)
-        except Exception:
+        except Exception as e:
+            errors.append(f"{symbol}: fetch/compute failed: {e}")
             continue
 
         overlay = result["overlay"]
         subplots = result["subplots"]
-        summary = generate_market_summary(overlay, subplots)
-        tf_results = analyze_multi_timeframe(symbol)
-
-        embed = build_report_embed(symbol, summary, tf_results)
         try:
+            summary = generate_market_summary(overlay, subplots)
+        except Exception as e:
+            errors.append(f"{symbol}: generate_market_summary failed: {e}")
+            continue
+
+        try:
+            tf_results = analyze_multi_timeframe(symbol)
+        except Exception as e:
+            errors.append(f"{symbol}: analyze_multi_timeframe failed: {e}")
+            continue
+
+        try:
+            embed = build_report_embed(symbol, summary, tf_results)
             send_webhook(webhook, embed)
             reports_sent.append(symbol)
-        except Exception:
-            pass
+        except Exception as e:
+            errors.append(f"{symbol}: send_webhook failed: {e}")
 
     return {
         "status": "ok",
         "reports": reports_sent,
+        "errors": errors,
         "time": datetime.now(timezone.utc).isoformat(),
     }
 
