@@ -72,7 +72,11 @@ def check():
                 pass
 
         # Level 2: strong signal
-        strong = check_strong_signal(symbol, old_sym_state, new_sig, cfg["strong_signal_threshold"])
+        try:
+            strong = check_strong_signal(symbol, old_sym_state, new_sig, cfg["strong_signal_threshold"])
+        except Exception as e:
+            errors.append(f"{symbol}: check_strong_signal failed: {e}")
+            strong = None
         if strong:
             embed = build_strong_signal_embed(symbol, strong["direction"],
                                               strong["bullish"], strong["total"])
@@ -159,32 +163,20 @@ def check():
 
 @app.get("/check_debug")
 def check_debug():
-    cfg = CONFIG["alerts"]
-    errors = []
+    errors = {}
     for symbol in CONFIG["symbols"]:
         try:
             result = _process_symbol(symbol)
+            errors[symbol] = "fetch_ohlcv + compute_all OK"
         except Exception as e:
-            errors.append(f"{symbol}: {e}")
+            errors[symbol] = f"fetch_ohlcv failed: {e}"
             continue
         try:
             from analysis.summary import generate_market_summary
             summary = generate_market_summary(result["overlay"], result["subplots"])
-            errors.append(f"{symbol}: summary OK, {len(summary)} keys")
+            errors[symbol] = f"generate_market_summary OK (type={type(summary).__name__}, len={len(summary)})"
         except Exception as e:
-            errors.append(f"{symbol}: summary failed: {e}")
-        try:
-            from analysis.multi_tf import analyze_multi_timeframe
-            tf = analyze_multi_timeframe(symbol)
-            errors.append(f"{symbol}: multi_tf OK, {len(tf)} keys")
-        except Exception as e:
-            errors.append(f"{symbol}: multi_tf failed: {e}")
-        try:
-            from monitor.notifier import build_report_embed
-            embed = build_report_embed(symbol, {}, {})
-            errors.append(f"{symbol}: embed builder OK")
-        except Exception as e:
-            errors.append(f"{symbol}: embed builder failed: {e}")
+            errors[symbol] = f"generate_market_summary failed: {e}"
     return {"errors": errors, "time": datetime.now(timezone.utc).isoformat()}
 
 

@@ -30,7 +30,9 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
     }
 
 
-def build_report_embed(symbol: str, summary: str, tf_results: list) -> dict:
+def build_report_embed(symbol: str, summary, tf_results: list) -> dict:
+    if isinstance(summary, dict):
+        summary = "\n".join(f"{k}: {v}" for k, v in summary.items())
     tf_lines = [f"{r['label']}: {r['direction']}" for r in tf_results]
     description = summary + "\n\n📈 **多時間框架**\n" + " | ".join(tf_lines)
     return {
