@@ -50,6 +50,7 @@ def check():
     today_key = f"record_{today}"
     today_state = state.get(today_key, {})
     alerts_sent = []
+    errors = []
 
     for symbol in CONFIG["symbols"]:
         try:
