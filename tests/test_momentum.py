@@ -70,3 +70,14 @@ def test_trend_reversal():
     ]
     assert momentum_trend(states)["label"] == "方向反轉"
     assert momentum_trend(states)["trend"] == "reversal"
+
+
+def test_trend_plateau_is_stable():
+    states = [
+        {"direction": "偏多", "strength": "中"},
+        {"direction": "偏多", "strength": "中"},
+        {"direction": "偏多", "strength": "強"},
+    ]
+    trend = momentum_trend(states)
+    assert trend["label"] == "維持"
+    assert trend["trend"] == "stable"

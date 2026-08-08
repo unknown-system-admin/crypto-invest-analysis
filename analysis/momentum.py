@@ -24,8 +24,10 @@ def momentum_trend(states: list) -> dict:
     if len(set(dirs)) > 1:
         return {"label": "方向反轉", "trend": "reversal", "states": states}
     scores = [_strength_key(s["strength"]) for s in states]
-    if scores == sorted(scores) and len(set(scores)) > 1:
+    strict_up = all(a < b for a, b in zip(scores, scores[1:]))
+    strict_down = all(a > b for a, b in zip(scores, scores[1:]))
+    if strict_up:
         return {"label": "增強中", "trend": "strengthening", "states": states}
-    if scores == sorted(scores, reverse=True) and len(set(scores)) > 1:
+    if strict_down:
         return {"label": "減弱中", "trend": "weakening", "states": states}
     return {"label": "維持", "trend": "stable", "states": states}
