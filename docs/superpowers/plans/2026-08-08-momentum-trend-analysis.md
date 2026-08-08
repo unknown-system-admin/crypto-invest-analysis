@@ -31,7 +31,7 @@ def test_classify_strong_bullish():
 
 
 def test_classify_medium_bullish():
-    signals = {"direction": "偏多", "bullish_count": 3, "bearish_count": 1, "total": 4}
+    signals = {"direction": "偏多", "bullish_count": 2, "bearish_count": 1, "total": 3}
     assert classify_state(signals)["strength"] == "中"
 
 
@@ -152,12 +152,15 @@ def momentum_trend(states: list) -> dict:
     if len(set(dirs)) > 1:
         return {"label": "方向反轉", "trend": "reversal", "states": states}
     scores = [_strength_key(s["strength"]) for s in states]
-    if scores == sorted(scores) and len(set(scores)) > 1:
+    strict_up = all(a < b for a, b in zip(scores, scores[1:]))
+    strict_down = all(a > b for a, b in zip(scores, scores[1:]))
+    if strict_up:
         return {"label": "增強中", "trend": "strengthening", "states": states}
-    if scores == sorted(scores, reverse=True) and len(set(scores)) > 1:
+    if strict_down:
         return {"label": "減弱中", "trend": "weakening", "states": states}
     return {"label": "維持", "trend": "stable", "states": states}
 ```
+注意：須為**嚴格單調**（`a < b`/`a > b`，不允許平手）。`中→中→強` 因有平台應為「維持」。
 
 - [ ] **Step 4: 確認測試通過**
 
