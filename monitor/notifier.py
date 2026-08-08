@@ -1,4 +1,5 @@
 import httpx
+from typing import Optional
 
 DISCORD_COLORS = {
     "reversal": 0xFFA500,
@@ -30,11 +31,18 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
     }
 
 
-def build_report_embed(symbol: str, summary, tf_results: list) -> dict:
+def build_report_embed(symbol: str, summary, tf_results: list,
+                       momentum: Optional[dict] = None) -> dict:
     if isinstance(summary, dict):
         summary = "\n".join(f"{k}: {v}" for k, v in summary.items())
     tf_lines = [f"{r['label']}: {r['direction']}" for r in tf_results]
-    description = summary + "\n\n📈 **多時間框架**\n" + " | ".join(tf_lines)
+    description = summary
+    if tf_lines:
+        description += "\n\n📈 **多時間框架**\n" + " | ".join(tf_lines)
+    if momentum:
+        arrow = " → ".join(
+            f"{s['direction']}({s['strength']})" for s in momentum["states"])
+        description += f"\n\n⚡ **動能演進**: {arrow} — {momentum['label']}"
     return {
         "embeds": [{
             "title": f"📊 市場日報 — {symbol}",

@@ -24,3 +24,18 @@ def test_report_embed_includes_summary_and_timeframes():
     assert "整體偏多" in desc
     assert "15m" in desc
     assert "1h" in desc
+
+
+def test_report_embed_includes_momentum():
+    momentum = {
+        "label": "減弱中",
+        "states": [
+            {"direction": "偏多", "strength": "強"},
+            {"direction": "偏多", "strength": "中"},
+            {"direction": "偏多", "strength": "弱"},
+        ],
+    }
+    embed = build_report_embed("BTC/USDT", "整體偏多", [], momentum=momentum)
+    desc = embed["embeds"][0]["description"]
+    assert "動能演進" in desc
+    assert "減弱中" in desc
