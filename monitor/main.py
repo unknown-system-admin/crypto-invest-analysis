@@ -208,8 +208,12 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             tf_results = analyze_multi_timeframe(symbol)
         except Exception:
             tf_results = []
-        states = states_from_df(df, step)
-        mtrend = momentum_trend(states)
+        try:
+            states = states_from_df(df, step)
+            mtrend = momentum_trend(states)
+        except Exception as e:
+            errors.append(f"{symbol}: momentum analysis failed: {e}")
+            mtrend = None
         try:
             embed = build_report_embed(symbol, summary, tf_results, momentum=mtrend)
             send_webhook(webhook, embed)
