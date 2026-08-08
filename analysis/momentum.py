@@ -1,3 +1,5 @@
+import pandas as pd
+
 STRENGTH_STRONG = 0.75
 STRENGTH_MEDIUM = 0.5
 
@@ -31,3 +33,20 @@ def momentum_trend(states: list) -> dict:
     if strict_down:
         return {"label": "減弱中", "trend": "weakening", "states": states}
     return {"label": "維持", "trend": "stable", "states": states}
+
+
+def states_from_df(df: pd.DataFrame, step: int) -> list:
+    """回傳 oldest → newest 的三個 momentum state"""
+    from indicators.calculator import compute_all
+    from analysis.summary import analyze_signals
+    offsets = [0, step, 2 * step]
+    states = []
+    for off in offsets:
+        df_view = df.iloc[: len(df) - off] if off > 0 else df
+        if len(df_view) < 30:
+            states.append({"direction": "震盪", "strength": "弱"})
+            continue
+        res = compute_all(df_view)
+        sig = analyze_signals(res["overlay"], res["subplots"])
+        states.append(classify_state(sig))
+    return list(reversed(states))
