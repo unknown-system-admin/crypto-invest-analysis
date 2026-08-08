@@ -6,10 +6,6 @@ symbols: ["BTC/USDT", "SOL/USDT"]
 alerts:
   trend_reversal: true
   strong_signal_threshold: 0.75
-  report_schedule:
-    - "08:00"
-    - "12:00"
-    - "20:00"
 
 trading:
   mode: "paper"  # "paper" | "live"
