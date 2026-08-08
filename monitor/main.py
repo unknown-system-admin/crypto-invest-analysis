@@ -1,12 +1,14 @@
 import yaml
 from pathlib import Path
 from datetime import datetime, timezone
+from typing import Optional
 
 from fastapi import FastAPI
 from data.fetcher import fetch_ohlcv
 from indicators.calculator import compute_all
 from analysis.summary import analyze_signals, generate_market_summary
 from analysis.multi_tf import analyze_multi_timeframe
+from analysis.momentum import momentum_trend, states_from_df
 from trading.strategy import CustomComposite
 from trading.portfolio import PortfolioStore, calculate_position_size
 from trading.executor import PaperExecutor, LiveExecutor
@@ -182,46 +184,45 @@ def check_debug():
 
 
 @app.get("/report")
-def report():
-    cfg = CONFIG["alerts"]
+def report(tf: Optional[str] = None, step: Optional[int] = None):
+    rcfg = CONFIG.get("reports", {})
+    tf = tf or rcfg.get("default_tf", "1d")
+    step = step or rcfg.get("default_step", 1)
     webhook = CONFIG["discord"]["webhook_url"]
     reports_sent = []
     errors = []
 
     for symbol in CONFIG["symbols"]:
         try:
-            result = _process_symbol(symbol)
+            df = fetch_ohlcv(symbol, timeframe=tf, limit=220)
         except Exception as e:
             errors.append(f"{symbol}: fetch/compute failed: {e}")
             continue
-
-        overlay = result["overlay"]
-        subplots = result["subplots"]
         try:
-            summary = generate_market_summary(overlay, subplots)
+            comp = compute_all(df)
+            summary = generate_market_summary(comp["overlay"], comp["subplots"])
         except Exception as e:
             errors.append(f"{symbol}: generate_market_summary failed: {e}")
             continue
-
         try:
             tf_results = analyze_multi_timeframe(symbol)
-        except Exception as e:
-            errors.append(f"{symbol}: analyze_multi_timeframe failed: {e}")
-            continue
-
+        except Exception:
+            tf_results = []
         try:
-            embed = build_report_embed(symbol, summary, tf_results)
+            states = states_from_df(df, step)
+            mtrend = momentum_trend(states)
+        except Exception as e:
+            errors.append(f"{symbol}: momentum analysis failed: {e}")
+            mtrend = None
+        try:
+            embed = build_report_embed(symbol, summary, tf_results, momentum=mtrend)
             send_webhook(webhook, embed)
             reports_sent.append(symbol)
         except Exception as e:
             errors.append(f"{symbol}: send_webhook failed: {e}")
-
-    return {
-        "status": "ok",
-        "reports": reports_sent,
-        "errors": errors,
-        "time": datetime.now(timezone.utc).isoformat(),
-    }
+    return {"status": "ok",
+            "reports": reports_sent, "errors": errors,
+            "time": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/health")

@@ -32,3 +32,7 @@ trading:
     max_daily_trades: 10
     max_drawdown_stop: 30
     signal_threshold: 0.6
+
+reports:
+  default_tf: "1d"
+  default_step: 1
