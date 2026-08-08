@@ -1,4 +1,4 @@
-from analysis.momentum import classify_state
+from analysis.momentum import classify_state, momentum_trend
 
 
 def test_classify_strong_bullish():
@@ -28,3 +28,45 @@ def test_classify_boundary_05_is_medium():
     s = classify_state(signals)
     assert s["strength"] == "中"
     assert s["direction"] == "偏空"
+
+
+def test_trend_weakening():
+    states = [
+        {"direction": "偏多", "strength": "強"},
+        {"direction": "偏多", "strength": "中"},
+        {"direction": "偏多", "strength": "弱"},
+    ]
+    trend = momentum_trend(states)
+    assert trend["label"] == "減弱中"
+    assert trend["trend"] == "weakening"
+
+
+def test_trend_strengthening():
+    states = [
+        {"direction": "偏空", "strength": "弱"},
+        {"direction": "偏空", "strength": "中"},
+        {"direction": "偏空", "strength": "強"},
+    ]
+    assert momentum_trend(states)["label"] == "增強中"
+    assert momentum_trend(states)["trend"] == "strengthening"
+
+
+def test_trend_stable():
+    states = [
+        {"direction": "偏多", "strength": "強"},
+        {"direction": "偏多", "strength": "強"},
+        {"direction": "偏多", "strength": "強"},
+    ]
+    trend = momentum_trend(states)
+    assert trend["label"] == "維持"
+    assert trend["trend"] == "stable"
+
+
+def test_trend_reversal():
+    states = [
+        {"direction": "偏空", "strength": "強"},
+        {"direction": "偏多", "strength": "中"},
+        {"direction": "偏多", "strength": "強"},
+    ]
+    assert momentum_trend(states)["label"] == "方向反轉"
+    assert momentum_trend(states)["trend"] == "reversal"
