@@ -9,7 +9,7 @@ def test_classify_strong_bullish():
 
 
 def test_classify_medium_bullish():
-    signals = {"direction": "偏多", "bullish_count": 3, "bearish_count": 1, "total": 4}
+    signals = {"direction": "偏多", "bullish_count": 2, "bearish_count": 1, "total": 3}
     assert classify_state(signals)["strength"] == "中"
 
 
