@@ -1,5 +1,9 @@
 import httpx
+from datetime import datetime
 from typing import Optional
+from zoneinfo import ZoneInfo
+
+TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 
 DISCORD_COLORS = {
     "reversal": 0xFFA500,
@@ -32,11 +36,15 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
 
 
 def build_report_embed(symbol: str, summary, tf_results: list,
-                       momentum: Optional[dict] = None) -> dict:
+                       momentum: Optional[dict] = None,
+                       now: Optional[datetime] = None) -> dict:
     if isinstance(summary, dict):
         summary = "\n".join(f"{k}: {v}" for k, v in summary.items())
     tf_lines = [f"{r['label']}: {r['direction']}" for r in tf_results]
-    description = summary
+    triggered_at = (now or datetime.now()).astimezone(TAIWAN_TZ)
+    description = f"🕐 {triggered_at:%Y/%m/%d %H:%M}"
+    if summary:
+        description += f"\n{summary}"
     if tf_lines:
         description += "\n\n📈 **多時間框架**\n" + " | ".join(tf_lines)
     if momentum:

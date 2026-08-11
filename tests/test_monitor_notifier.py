@@ -1,4 +1,18 @@
+from datetime import datetime, timezone
+
 from monitor.notifier import build_reversal_embed, build_strong_signal_embed, build_report_embed, send_webhook
+
+
+def test_report_embed_first_line_is_taiwan_time():
+    embed = build_report_embed(
+        "BTC/USDT",
+        "整體偏多",
+        [],
+        now=datetime(2026, 8, 11, 6, 58, tzinfo=timezone.utc),
+    )
+    desc = embed["embeds"][0]["description"]
+    first_line = desc.splitlines()[0]
+    assert first_line == "🕐 2026/08/11 14:58"
 
 
 def test_build_reversal_embed_has_correct_fields():
