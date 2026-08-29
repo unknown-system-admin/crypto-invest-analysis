@@ -74,13 +74,20 @@ reports:
 ⚡ 動能演進: 偏多(強) → 偏多(中) → 偏多(弱) — 減弱中
 ```
 
+報告開頭顯示觸發時間（台灣時間）：
+```
+🕐 2026/08/29 15:25
+```
+
 ## 檔案影響
 
-- `analysis/momentum.py`（新增）：momentum state 計算 + 演進判斷
+- `analysis/momentum.py`（新增）：momentum state 計算 + 演進判斷 + `states_from_df`
 - `monitor/main.py`：`/report` 支援 `tf`/`step` 參數、接入 momentum
-- `monitor/notifier.py`：`build_report_embed` 加入「⚡ 動能演進」文字
+- `monitor/notifier.py`：`build_report_embed` 加入「⚡ 動能演進」文字 + 台灣時間戳
 - `monitor/config.yaml`：新增 `reports:` 區段
 - `tests/test_momentum.py`：新增測試（state 計算、演進判斷、API 參數）
+- `tests/test_monitor_report.py`：新增測試（`states_from_df`）
+- `data/fetcher.py`：從 Binance 改為 OKX API（透過 ccxt）
 
 ## 測試重點（驗證意圖）
 
@@ -88,3 +95,17 @@ reports:
 - 給三組 state，驗證演進歸「增/減/維/反轉」符合預期
 - `/report?tf=4h&step=4` 能正確套用 offset 並回傳趨勢文字
 - 省略參數時使用 config 預設
+- 報告開頭顯示台灣時間（UTC+8）
+- OKX API 憑證正確讀取，資料抓取正常
+
+## 進度
+
+- [x] 動能狀態計算（`classify_state`）
+- [x] 動能演進判斷（`momentum_trend`）
+- [x] `states_from_df` 實作
+- [x] config 新增 `reports` 預設
+- [x] `build_report_embed` 加入動能演進 + 台灣時間
+- [x] `/report` 支援 `tf`/`step` 參數
+- [x] 資料來源從 Binance 改為 OKX API
+- [x] 全量測試通過（71 passed）
+- [x] 部署至 Render 並驗證成功
