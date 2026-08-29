@@ -40,7 +40,9 @@ class BacktestEngine:
     slippage: float = 0.0005
     max_position_pct: float = 25.0
     max_daily_trades: int = 10
+    symbol: str = "BTC/USDT"
     max_drawdown_stop: float = 30.0
+    timeframe: str = "1h"
     
     def run(self, features: pd.DataFrame) -> BacktestResult:
         cash = self.initial_capital
@@ -48,6 +50,7 @@ class BacktestEngine:
         equity_curve = []
         trades = []
         daily_trade_count = 0
+        current_day = None
         
         for i, (idx, row) in enumerate(features.iterrows()):
             sig = self.strategy.evaluate(row)
@@ -57,6 +60,16 @@ class BacktestEngine:
                 equity_curve.append(cash)
                 continue
             
+            # Reset daily trade count on new day
+            row_day = idx.date()
+            if current_day != row_day:
+                current_day = row_day
+                daily_trade_count = 0
+            
+            # Update current price for positions
+            for pos in positions:
+                pos.current_price = price
+            
             # Check drawdown
             peak = max(equity_curve) if equity_curve else cash
             current_equity = cash + sum(p.quantity * price for p in positions)
@@ -64,25 +77,30 @@ class BacktestEngine:
             
             if drawdown > self.max_drawdown_stop and positions:
                 for pos in positions:
-                    cash += pos.quantity * price * (1 - self.fee_rate)
-                    trades.append({"action": "sell", "price": price, "reason": "drawdown_stop"})
+                    effective_price = price * (1 - self.slippage)
+                    pnl = (effective_price * (1 - self.fee_rate) - pos.entry_price * (1 + self.fee_rate)) * pos.quantity
+                    cash += pos.quantity * effective_price * (1 - self.fee_rate)
+                    trades.append({"action": "sell", "price": effective_price, "reason": "drawdown_stop", "pnl": pnl})
                 positions.clear()
             
             # Execute trades
             if sig.direction == "偏多" and not positions and daily_trade_count < self.max_daily_trades:
-                qty = (cash * self.max_position_pct / 100) / price
+                effective_price = price * (1 + self.slippage)
+                qty = (cash * self.max_position_pct / 100) / effective_price
                 if qty > 0:
-                    cost = qty * price * (1 + self.fee_rate)
+                    cost = qty * effective_price * (1 + self.fee_rate)
                     if cost <= cash:
                         cash -= cost
-                        positions.append(Position("BTC/USDT", "long", qty, price))
-                        trades.append({"action": "buy", "price": price, "quantity": qty})
+                        positions.append(Position(self.symbol, "long", qty, effective_price))
+                        trades.append({"action": "buy", "price": effective_price, "quantity": qty})
                         daily_trade_count += 1
             
             elif sig.direction == "偏空" and positions and daily_trade_count < self.max_daily_trades:
                 for pos in positions:
-                    cash += pos.quantity * price * (1 - self.fee_rate)
-                    trades.append({"action": "sell", "price": price, "quantity": pos.quantity})
+                    effective_price = price * (1 - self.slippage)
+                    pnl = (effective_price * (1 - self.fee_rate) - pos.entry_price * (1 + self.fee_rate)) * pos.quantity
+                    cash += pos.quantity * effective_price * (1 - self.fee_rate)
+                    trades.append({"action": "sell", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
                 positions.clear()
                 daily_trade_count += 1
             
@@ -104,7 +122,17 @@ class BacktestEngine:
         if len(equity_curve) > 1:
             returns = pd.Series(equity_curve).pct_change().dropna()
             if returns.std() > 0:
-                sharpe = (returns.mean() / returns.std()) * np.sqrt(252 * 24)  # Annualized for hourly
+                # Determine annualization factor based on timeframe
+                periods_per_year = {
+                    "1m": 60 * 24 * 365,
+                    "5m": 12 * 24 * 365,
+                    "15m": 4 * 24 * 365,
+                    "1h": 24 * 365,
+                    "4h": 6 * 365,
+                    "1d": 365,
+                    "1w": 52,
+                }.get(self.timeframe, 24 * 365)  # default hourly
+                sharpe = (returns.mean() / returns.std()) * np.sqrt(periods_per_year)
             else:
                 sharpe = 0.0
         else:
