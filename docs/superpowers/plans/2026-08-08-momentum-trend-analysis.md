@@ -6,7 +6,7 @@
 
 **Architecture:** 新增 `analysis/momentum.py` 提供純函式計算任意 K 棒 offset 的動能狀態與演進判斷。`monitor/main.py` 的 `/report` 接受 `tf`/`step` 查詢參數（config 提供預設），對同一份 OHLCV 用多個 offset 各算一次 momentum state，並把結果併入 `build_report_embed`。
 
-**Tech Stack:** Python 3.12, pandas, FastAPI, pytest, ccxt
+**Tech Stack:** Python 3.12, pandas, FastAPI, pytest, ccxt (using OKX API)
 
 ---
 

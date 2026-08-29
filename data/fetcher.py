@@ -1,4 +1,5 @@
 import time
+import os
 from typing import Optional
 
 import pandas as pd
@@ -29,12 +30,17 @@ class _TTLCache:
 _cache = _TTLCache(_CACHE_TTL)
 
 
-def fetch_ohlcv(symbol: str, timeframe: str = "1h", limit: int = 200) -> pd.DataFrame:
+def fetch_ohlcv(symbol: str, timeframe: str = "1d", limit: int = 200) -> pd.DataFrame:
     cache_key = f"{symbol}:{timeframe}:{limit}"
     cached = _cache.get(cache_key)
     if cached is not None:
         return cached
-    exchange = ccxt.binance({"enableRateLimit": True})
+    exchange = ccxt.okx({
+        "apiKey": os.getenv("OKX_API_KEY"),
+        "secret": os.getenv("OKX_API_SECRET"),
+        "password": os.getenv("OKX_API_PASSPHRASE"),
+        "enableRateLimit": True,
+    })
     try:
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
     except ccxt.BadSymbol:
