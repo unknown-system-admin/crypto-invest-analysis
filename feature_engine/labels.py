@@ -1,4 +1,5 @@
 # feature_engine/labels.py
+import numpy as np
 import pandas as pd
 
 
@@ -25,7 +26,9 @@ def binary_label(df: pd.DataFrame, n_bars: int = 5, threshold: float = 0) -> pd.
         threshold: Minimum return percentage to label as up
         
     Returns:
-        Series with binary labels (1 for up, 0 for down)
+        Series with binary labels (1 for up, 0 for down), NaN for last n_bars rows
     """
     returns = future_return(df, n_bars)
-    return (returns > threshold).astype(int)
+    labels = (returns > threshold).astype(float)
+    labels[returns.isna()] = np.nan
+    return labels

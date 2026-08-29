@@ -47,3 +47,18 @@ def test_binary_label_down():
     result = binary_label(df, n_bars=2, threshold=0)
     
     assert result.iloc[0] == 0  # Down
+
+
+def test_binary_label_nan_for_last_n_bars():
+    dates = pd.date_range("2024-01-01", periods=10, freq="1h")
+    df = pd.DataFrame({
+        "close": [100, 105, 110, 115, 120, 125, 130, 135, 140, 145],
+    }, index=dates)
+    
+    result = binary_label(df, n_bars=2, threshold=0)
+    
+    # Last 2 rows should be NaN
+    assert pd.isna(result.iloc[-1])
+    assert pd.isna(result.iloc[-2])
+    # Earlier rows should be valid
+    assert result.iloc[0] == 1.0
