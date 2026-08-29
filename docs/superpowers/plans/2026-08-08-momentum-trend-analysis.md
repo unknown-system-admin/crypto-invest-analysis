@@ -397,19 +397,19 @@ git commit -m "feat: report supports tf/step momentum trend"
 
 ### Task 6: 全量驗證 + push
 
-- [ ] **Step 1: 跑全量測試**
+- [x] **Step 1: 跑全量測試**
 
 Run: `.venv/bin/pytest tests/ -q`
 Expected: PASS，並確認無 `report_schedule` 殘留引用：`grep -rn "report_schedule" --include=*.py`（僅 docs 檔案可留）
 
-- [ ] **Step 2: 確認 git 乾淨**
+- [x] **Step 2: 確認 git 乾淨**
 
 ```bash
 git status
 ```
 Expected: working tree clean。
 
-- [ ] **Step 3: push**
+- [x] **Step 3: push**
 
 ```bash
 git push
@@ -425,3 +425,6 @@ git push
 - **命名一致性**：`classify_state` / `momentum_trend` / `states_from_df` 全表同名；`trend` 值為英文字串。
 - **執行順序**：Task4（notifier）在 Task5（route）之前，符合依賴。
 - **已知風險**：`states_from_df` 依賴 `analyze_signals(overlay, subplots)`；多 offset 切片下 `ta` 各指標需足量歷史資料，`step` 較大或 `tf=1w` 時可能因 SMA200 需 200 bar 而資料不足。Task5 已加 `len(df_view) < 30 → 降級` 防護；若遇到列不足，把下限調大即可。
+- **資料來源**：從 Binance 改為 OKX API（透過 ccxt），以避免 IP 封鎖問題。OKX API 憑證透過環境變數讀取。
+- **時間戳**：報告開頭顯示台灣時間（UTC+8），格式 `🕐 YYYY/MM/DD HH:MM`。
+- **全部完成**：所有任務已完成，全量測試通過（71 passed），已部署至 Render 並驗證成功。
