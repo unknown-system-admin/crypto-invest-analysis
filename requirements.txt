@@ -3,3 +3,6 @@ pandas
 ccxt
 ta
 plotly
+matplotlib
+scikit-learn
+joblib
