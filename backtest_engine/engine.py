@@ -84,7 +84,9 @@ class BacktestEngine:
                     else:
                         effective_price = price * (1 + self.slippage)
                         pnl = (pos.entry_price * (1 - self.fee_rate) - effective_price * (1 + self.fee_rate)) * pos.quantity
-                        cash += pos.quantity * (pos.entry_price * 2 - effective_price) * (1 - self.fee_rate)
+                        # Return margin + PnL
+                        margin_returned = pos.entry_price * pos.quantity
+                        cash += margin_returned + pnl
                     trades.append({"action": "sell", "price": effective_price, "reason": "drawdown_stop", "pnl": pnl})
                 positions.clear()
 
@@ -105,10 +107,13 @@ class BacktestEngine:
                 # Open short
                 elif sig.direction == "偏空" and not positions:
                     effective_price = price * (1 - self.slippage)
-                    qty = (cash * self.max_position_pct / 100) / effective_price
-                    if qty > 0:
-                        # Short: receive cash from selling, owe shares
-                        cash += qty * effective_price * (1 - self.fee_rate)
+                    # Use 25% of capital for short (margin requirement)
+                    margin_required = cash * self.max_position_pct / 100
+                    qty = margin_required / effective_price
+                    if qty > 0 and margin_required <= cash and margin_required > 0:
+                        # Short selling: deposit margin as collateral
+                        # When we close, we'll buy back at current price
+                        cash -= margin_required  # Reserve margin
                         positions.append(Position(self.symbol, "short", qty, effective_price))
                         trades.append({"action": "short_sell", "price": effective_price, "quantity": qty})
                         daily_trade_count += 1
@@ -127,10 +132,11 @@ class BacktestEngine:
                 elif sig.direction == "偏多" and positions and positions[0].side == "short":
                     pos = positions[0]
                     effective_price = price * (1 + self.slippage)
+                    # Calculate PnL: profit = (entry - current) * qty
                     pnl = (pos.entry_price * (1 - self.fee_rate) - effective_price * (1 + self.fee_rate)) * pos.quantity
-                    # Return the shares owed, net the profit/loss
-                    cash -= pos.quantity * effective_price * (1 + self.fee_rate)
-                    cash += pos.quantity * pos.entry_price * (1 - self.fee_rate)
+                    # Return margin + PnL
+                    margin_returned = pos.entry_price * pos.quantity
+                    cash += margin_returned + pnl
                     trades.append({"action": "cover", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
                     positions.clear()
                     daily_trade_count += 1
