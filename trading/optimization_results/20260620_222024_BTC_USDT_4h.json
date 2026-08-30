@@ -1,0 +1,3194 @@
+{
+  "config": {
+    "symbol": "BTC/USDT",
+    "timeframe": "4h",
+    "limit": 500,
+    "initial_capital": 10000.0,
+    "fee_rate": 0.001,
+    "slippage": 0.0005,
+    "risk_config": {
+      "max_position_pct": 25,
+      "min_bars_hold": 1,
+      "max_daily_trades": 10,
+      "max_drawdown_stop": 30,
+      "signal_threshold": 0.6
+    },
+    "period_values": [
+      7,
+      9,
+      11,
+      13,
+      14,
+      15,
+      17,
+      19,
+      21
+    ],
+    "ob_values": [
+      65,
+      70,
+      75,
+      80,
+      85
+    ],
+    "os_values": [
+      15,
+      20,
+      25,
+      30,
+      35
+    ]
+  },
+  "results": [
+    {
+      "params": {
+        "period": 7,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 70,
+        "oversold": 15
+      },
+      "total_return_pct": -0.08,
+      "sharpe_ratio": -1.01,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9992.05,
+      "cagr": -0.35
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 65,
+        "oversold": 15
+      },
+      "total_return_pct": -0.65,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9934.72,
+      "cagr": -2.84
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 70,
+        "oversold": 20
+      },
+      "total_return_pct": -0.85,
+      "sharpe_ratio": -1.25,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9914.53,
+      "cagr": -3.7
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 65,
+        "oversold": 20
+      },
+      "total_return_pct": -1.41,
+      "sharpe_ratio": -1.48,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9858.98,
+      "cagr": -6.05
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 75,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 80,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 85,
+        "oversold": 15
+      },
+      "total_return_pct": -1.52,
+      "sharpe_ratio": -1.38,
+      "max_drawdown_pct": 2.64,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9848.31,
+      "cagr": -6.5
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 70,
+        "oversold": 25
+      },
+      "total_return_pct": -2.11,
+      "sharpe_ratio": -1.67,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9789.21,
+      "cagr": -8.94
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 75,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 80,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 85,
+        "oversold": 20
+      },
+      "total_return_pct": -2.25,
+      "sharpe_ratio": -1.59,
+      "max_drawdown_pct": 3.33,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9775.26,
+      "cagr": -9.51
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 70,
+        "oversold": 30
+      },
+      "total_return_pct": -2.52,
+      "sharpe_ratio": -1.74,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9747.68,
+      "cagr": -10.63
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 65,
+        "oversold": 25
+      },
+      "total_return_pct": -2.63,
+      "sharpe_ratio": -1.89,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9736.54,
+      "cagr": -11.08
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 65,
+        "oversold": 30
+      },
+      "total_return_pct": -3.04,
+      "sharpe_ratio": -1.95,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 2,
+      "final_equity": 9695.97,
+      "cagr": -12.7
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 70,
+        "oversold": 35
+      },
+      "total_return_pct": -3.4,
+      "sharpe_ratio": -1.87,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9660.34,
+      "cagr": -14.1
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 75,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 80,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 85,
+        "oversold": 25
+      },
+      "total_return_pct": -3.43,
+      "sharpe_ratio": -1.97,
+      "max_drawdown_pct": 4.71,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9657.16,
+      "cagr": -14.22
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 75,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 80,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 85,
+        "oversold": 30
+      },
+      "total_return_pct": -3.82,
+      "sharpe_ratio": -2.02,
+      "max_drawdown_pct": 5.75,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9618.02,
+      "cagr": -15.74
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 65,
+        "oversold": 35
+      },
+      "total_return_pct": -3.89,
+      "sharpe_ratio": -2.05,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 3,
+      "final_equity": 9611.23,
+      "cagr": -16.0
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 7,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 9,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 11,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 13,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 14,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 15,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 17,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 19,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 75,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 80,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    },
+    {
+      "params": {
+        "period": 21,
+        "overbought": 85,
+        "oversold": 35
+      },
+      "total_return_pct": -4.96,
+      "sharpe_ratio": -2.25,
+      "max_drawdown_pct": 6.65,
+      "win_rate": 0.0,
+      "total_trades": 1,
+      "final_equity": 9504.49,
+      "cagr": -20.03
+    }
+  ]
+}
