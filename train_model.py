@@ -11,6 +11,7 @@ import pandas as pd
 import ta
 import ccxt
 from sklearn.ensemble import RandomForestClassifier
+from data_cache import load_or_fetch, update_cache
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
@@ -158,9 +159,13 @@ def train_and_evaluate(args):
     """Main training pipeline."""
     symbol = "BTC/USDT"
 
-    print(f"Fetching {symbol} {args.timeframe} data ({args.limit} candles)...")
-    df = fetch_ohlcv(symbol, args.timeframe, args.limit)
-    print(f"  Got {len(df)} candles: {df.index[0]} -> {df.index[-1]}")
+    print(f"Loading {symbol} {args.timeframe} data ({args.limit} candles)...")
+    if args.update_cache:
+        df = update_cache(symbol, args.timeframe, args.limit)
+        print(f"  Cache updated: {len(df)} candles: {df.index[0]} -> {df.index[-1]}")
+    else:
+        df = load_or_fetch(symbol, args.timeframe, args.limit)
+        print(f"  Got {len(df)} candles: {df.index[0]} -> {df.index[-1]}")
 
     print("Building features...")
     features = build_features(df, args.use_momentum, args.use_volume, args.use_volatility)
@@ -347,6 +352,10 @@ Usage Examples:
                                help="Use volume features (default: True)")
     feature_group.add_argument("--use-volatility", action="store_true", default=True,
                                help="Use volatility features (default: True)")
+
+    cache_group = parser.add_argument_group("Cache Options")
+    cache_group.add_argument("--update-cache", action="store_true",
+                             help="Force update cache with fresh data from OKX")
 
     output_group = parser.add_argument_group("Output Options")
     output_group.add_argument("--save-model", type=str, default=None,
