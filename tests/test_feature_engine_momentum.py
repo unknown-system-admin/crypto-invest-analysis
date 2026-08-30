@@ -8,7 +8,7 @@ def test_momentum_score_range():
     df = pd.DataFrame({
         "close": np.random.uniform(40000, 50000, 100),
         "RSI": np.random.uniform(30, 70, 100),
-        "MACD_histogram": np.random.uniform(-100, 100, 100),
+        "MACD": np.random.uniform(-100, 100, 100),
         "SMA_20": np.random.uniform(40000, 50000, 100),
         "SMA_50": np.random.uniform(40000, 50000, 100),
     }, index=dates)

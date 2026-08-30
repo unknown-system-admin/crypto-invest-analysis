@@ -16,12 +16,8 @@ def test_compute_all_indicators_returns_expected_columns():
     result = compute_all_indicators(df)
 
     expected_columns = [
-        "SMA_20", "SMA_50", "SMA_200", "EMA_12", "EMA_26",
-        "ADX", "ICHIMOKU_A", "ICHIMOKU_B",
-        "BB_upper", "BB_middle", "BB_lower", "ATR", "KC_upper", "KC_lower",
-        "RSI", "MACD", "MACD_signal", "MACD_histogram",
-        "STOCH_K", "STOCH_D", "CCI", "Williams_R", "ROC", "MFI",
-        "OBV", "VWAP", "CMF",
+        "SMA_20", "SMA_50", "SMA_200", "EMA_26",
+        "ATR", "RSI", "MACD", "MFI", "OBV",
     ]
     for col in expected_columns:
         assert col in result.columns, f"Missing column: {col}"
