@@ -37,6 +37,20 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
     }
 
 
+def _interpret_delta(delta: float) -> str:
+    """Interpret delta value for display."""
+    if delta > 0.01:
+        return "↑ 快速上升"
+    elif delta > 0.001:
+        return "↗ 穩定上升"
+    elif delta > -0.001:
+        return "→ 持平"
+    elif delta > -0.01:
+        return "↘ 穩定下降"
+    else:
+        return "↓ 快速下降"
+
+
 def build_report_embed(symbol: str, summary, tf_results: list,
                        momentum: Optional[dict] = None,
                        momentum_scores: Optional[list] = None,
@@ -66,6 +80,11 @@ def build_report_embed(symbol: str, summary, tf_results: list,
         # Calculate acceleration (second derivative) - trend strength
         acceleration = delta1 - delta2
         
+        # Interpret deltas
+        delta1_interp = _interpret_delta(delta1)
+        delta2_interp = _interpret_delta(delta2)
+        delta3_interp = _interpret_delta(delta3)
+        
         # Determine trend direction
         if delta1 > 0.01:
             trend_dir = "↑ 上升"
@@ -85,8 +104,8 @@ def build_report_embed(symbol: str, summary, tf_results: list,
         # Build score history
         score_history = f"{prev3:.2f} → {prev2:.2f} → {prev1:.2f} → {current:.2f}"
         
-        # Build delta history
-        delta_history = f"{delta3:+.3f} → {delta2:+.3f} → {delta1:+.3f}"
+        # Build delta history with interpretation
+        delta_history = f"{delta3:+.3f}({delta3_interp}) → {delta2:+.3f}({delta2_interp}) → {delta1:+.3f}({delta1_interp})"
         
         description += f"\n\n📊 **動能分數演進**: {score_history}"
         description += f"\n📐 **動能微分**: {delta_history}"
