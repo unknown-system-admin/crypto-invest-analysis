@@ -39,6 +39,7 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
 
 def build_report_embed(symbol: str, summary, tf_results: list,
                        momentum: Optional[dict] = None,
+                       momentum_score: Optional[float] = None,
                        now: Optional[datetime] = None) -> dict:
     if isinstance(summary, dict):
         summary = "\n".join(f"{k}: {v}" for k, v in summary.items())
@@ -53,6 +54,10 @@ def build_report_embed(symbol: str, summary, tf_results: list,
         arrow = " → ".join(
             f"{s['direction']}({s['strength']})" for s in momentum["states"])
         description += f"\n\n⚡ **動能演進**: {arrow} — {momentum['label']}"
+    if momentum_score is not None:
+        score_pct = int((momentum_score + 1) * 50)
+        bar = "█" * (score_pct // 5) + "░" * (20 - score_pct // 5)
+        description += f"\n\n📊 **動能分數**: {momentum_score:.3f} [{bar}]"
     return {
         "embeds": [{
             "title": f"📊 市場日報 — {symbol}",

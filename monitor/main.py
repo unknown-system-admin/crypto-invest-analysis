@@ -215,7 +215,18 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             errors.append(f"{symbol}: momentum analysis failed: {e}")
             mtrend = None
         try:
-            embed = build_report_embed(symbol, summary, tf_results, momentum=mtrend)
+            from feature_engine.momentum import momentum_score
+            from feature_engine.indicators import add_all_indicators
+            df_ind = add_all_indicators(df)
+            scores = momentum_score(df_ind)
+            latest_score = scores.iloc[-1] if len(scores) > 0 else None
+        except Exception as e:
+            latest_score = None
+
+        try:
+            embed = build_report_embed(symbol, summary, tf_results, 
+                                      momentum=mtrend, 
+                                      momentum_score=latest_score)
             send_webhook(webhook, embed)
             reports_sent.append(symbol)
         except Exception as e:
