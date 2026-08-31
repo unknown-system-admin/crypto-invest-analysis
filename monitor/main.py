@@ -216,17 +216,19 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             mtrend = None
         try:
             from feature_engine.momentum import momentum_score
-            from feature_engine.indicators import add_all_indicators
-            df_ind = add_all_indicators(df)
+            from feature_engine.indicators import compute_all_indicators
+            df_ind = compute_all_indicators(df)
+            df_ind['close'] = df['close']  # Add close column for momentum_score
             scores = momentum_score(df_ind)
-            latest_score = scores.iloc[-1] if len(scores) > 0 else None
+            # Get last 4 scores for evolution display
+            recent_scores = scores.dropna().tolist()[-4:] if len(scores.dropna()) >= 4 else scores.dropna().tolist()
         except Exception as e:
-            latest_score = None
+            recent_scores = None
 
         try:
             embed = build_report_embed(symbol, summary, tf_results, 
                                       momentum=mtrend, 
-                                      momentum_score=latest_score)
+                                      momentum_scores=recent_scores)
             send_webhook(webhook, embed)
             reports_sent.append(symbol)
         except Exception as e:

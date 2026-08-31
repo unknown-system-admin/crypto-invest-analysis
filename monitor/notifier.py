@@ -39,7 +39,7 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
 
 def build_report_embed(symbol: str, summary, tf_results: list,
                        momentum: Optional[dict] = None,
-                       momentum_score: Optional[float] = None,
+                       momentum_scores: Optional[list] = None,
                        now: Optional[datetime] = None) -> dict:
     if isinstance(summary, dict):
         summary = "\n".join(f"{k}: {v}" for k, v in summary.items())
@@ -54,10 +54,48 @@ def build_report_embed(symbol: str, summary, tf_results: list,
         arrow = " → ".join(
             f"{s['direction']}({s['strength']})" for s in momentum["states"])
         description += f"\n\n⚡ **動能演進**: {arrow} — {momentum['label']}"
-    if momentum_score is not None:
-        score_pct = int((momentum_score + 1) * 50)
+    if momentum_scores and len(momentum_scores) >= 3:
+        # momentum_scores: [score_3bars_ago, score_2bars_ago, score_1bar_ago, current_score]
+        prev3, prev2, prev1, current = momentum_scores[-4:]
+        
+        # Calculate delta (first derivative) - trend direction
+        delta1 = current - prev1
+        delta2 = prev1 - prev2
+        delta3 = prev2 - prev3
+        
+        # Calculate acceleration (second derivative) - trend strength
+        acceleration = delta1 - delta2
+        
+        # Determine trend direction
+        if delta1 > 0.01:
+            trend_dir = "↑ 上升"
+        elif delta1 < -0.01:
+            trend_dir = "↓ 下降"
+        else:
+            trend_dir = "→ 持平"
+        
+        # Determine acceleration
+        if acceleration > 0.01:
+            accel_label = "加速"
+        elif acceleration < -0.01:
+            accel_label = "減速"
+        else:
+            accel_label = "穩定"
+        
+        # Build score history
+        score_history = f"{prev3:.2f} → {prev2:.2f} → {prev1:.2f} → {current:.2f}"
+        
+        # Build delta history
+        delta_history = f"{delta3:+.3f} → {delta2:+.3f} → {delta1:+.3f}"
+        
+        description += f"\n\n📊 **動能分數演進**: {score_history}"
+        description += f"\n📐 **動能微分**: {delta_history}"
+        description += f"\n🎯 **趨勢方向**: {trend_dir} | **加速度**: {accel_label} ({acceleration:+.3f})"
+    elif momentum_scores and len(momentum_scores) > 0:
+        current = momentum_scores[-1]
+        score_pct = int((current + 1) * 50)
         bar = "█" * (score_pct // 5) + "░" * (20 - score_pct // 5)
-        description += f"\n\n📊 **動能分數**: {momentum_score:.3f} [{bar}]"
+        description += f"\n\n📊 **動能分數**: {current:.3f} [{bar}]"
     return {
         "embeds": [{
             "title": f"📊 市場日報 — {symbol}",
