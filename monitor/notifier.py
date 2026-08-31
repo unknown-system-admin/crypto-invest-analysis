@@ -1,3 +1,5 @@
+import time
+
 import httpx
 from datetime import datetime
 from typing import Optional
@@ -60,7 +62,27 @@ def build_report_embed(symbol: str, summary, tf_results: list,
     }
 
 
-def send_webhook(url: str, payload: dict) -> bool:
-    resp = httpx.post(url, json=payload, timeout=10)
-    resp.raise_for_status()
-    return True
+def send_webhook(url: str, payload: dict, max_retries: int = 3) -> bool:
+    """Send webhook with retry logic for rate limits."""
+    for attempt in range(max_retries):
+        try:
+            resp = httpx.post(url, json=payload, timeout=10)
+            
+            if resp.status_code == 429:
+                retry_after = resp.json().get("retry_after", 1)
+                print(f"Rate limited, waiting {retry_after}s...")
+                time.sleep(retry_after + 1)
+                continue
+            
+            resp.raise_for_status()
+            return True
+            
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429 and attempt < max_retries - 1:
+                retry_after = e.response.json().get("retry_after", 1)
+                print(f"Rate limited, waiting {retry_after}s...")
+                time.sleep(retry_after + 1)
+                continue
+            raise
+    
+    return False
