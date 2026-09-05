@@ -1,7 +1,7 @@
 discord:
   webhook_url: "https://discord.com/api/webhooks/1514287474501881907/zR8JbvC9zZnGttbfZU9fePdqMNTiypBbDgiJ4Wdxk8j_S4xx7kk_S7BnnIA9O6onPprd"
-  bot_token: ""
-  channel_id: "1514286712333799527"
+  bot_token: ""  # Set via DISCORD_BOT_TOKEN env var
+  channel_id: ""  # Set via DISCORD_CHANNEL_ID env var
 
 symbols: ["BTC/USDT", "SOL/USDT"]
 
