@@ -20,6 +20,7 @@ from monitor.notifier import (
     build_strong_signal_embed,
     build_report_embed,
     send_webhook,
+    send_bot_message,
 )
 
 CONFIG_PATH = Path(__file__).parent / "config.yaml"

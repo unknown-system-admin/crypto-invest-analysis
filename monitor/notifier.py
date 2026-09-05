@@ -1,17 +1,67 @@
 import time
+import yaml
+from pathlib import Path
 
 import httpx
+import discord
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 TAIWAN_TZ = ZoneInfo("Asia/Taipei")
 
+CONFIG_PATH = Path(__file__).parent / "config.yaml"
+with open(CONFIG_PATH) as f:
+    CONFIG = yaml.safe_load(f)
+
+_bot_client = None
+_bot_channel = None
+
 DISCORD_COLORS = {
     "reversal": 0xFFA500,
     "strong": 0x00FF00,
     "report": 0x4FC3F7,
 }
+
+
+def get_bot_channel():
+    """Get or create Discord bot channel."""
+    global _bot_client, _bot_channel
+    
+    if _bot_channel is not None:
+        return _bot_channel
+    
+    bot_token = CONFIG.get("discord", {}).get("bot_token", "")
+    channel_id = CONFIG.get("discord", {}).get("channel_id", "")
+    
+    if not bot_token or not channel_id:
+        return None
+    
+    try:
+        intents = discord.Intents.default()
+        _bot_client = discord.Client(intents=intents)
+        _bot_channel = _bot_client.get_channel(int(channel_id))
+        return _bot_channel
+    except Exception as e:
+        print(f"[bot] Failed to get channel: {e}")
+        return None
+
+
+def send_bot_message(embed: dict) -> bool:
+    """Send message using Discord bot."""
+    channel = get_bot_channel()
+    if channel is None:
+        return False
+    
+    try:
+        import asyncio
+        asyncio.get_event_loop().run_until_complete(
+            channel.send(embed=discord.Embed.from_dict(embed["embeds"][0]))
+        )
+        return True
+    except Exception as e:
+        print(f"[bot] Send failed: {e}")
+        return False
 
 
 def build_reversal_embed(symbol: str, old_dir: str, new_dir: str, changes: dict) -> dict:
@@ -125,7 +175,13 @@ def build_report_embed(symbol: str, summary, tf_results: list,
 
 
 def send_webhook(url: str, payload: dict, max_retries: int = 3) -> bool:
-    """Send webhook with retry logic for rate limits."""
+    """Send webhook with bot fallback."""
+    # Try bot first
+    bot_ok = send_bot_message(payload)
+    if bot_ok:
+        return True
+    
+    # Fallback to webhook
     for attempt in range(max_retries):
         try:
             resp = httpx.post(url, json=payload, timeout=15)

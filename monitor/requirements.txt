@@ -6,3 +6,4 @@ pandas
 ccxt
 ta
 plotly
+discord.py>=2.0
