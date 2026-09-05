@@ -128,21 +128,25 @@ def send_webhook(url: str, payload: dict, max_retries: int = 3) -> bool:
     """Send webhook with retry logic for rate limits."""
     for attempt in range(max_retries):
         try:
+            print(f"[webhook] attempt={attempt+1} url={url[:60]}...")
             resp = httpx.post(url, json=payload, timeout=10)
+            print(f"[webhook] status={resp.status_code} body={resp.text[:200]}")
             
             if resp.status_code == 429:
                 retry_after = resp.json().get("retry_after", 1)
-                print(f"Rate limited, waiting {retry_after}s...")
+                print(f"[webhook] Rate limited, waiting {retry_after}s...")
                 time.sleep(retry_after + 1)
                 continue
             
             resp.raise_for_status()
+            print(f"[webhook] success")
             return True
             
         except httpx.HTTPStatusError as e:
+            print(f"[webhook] HTTP error: {e.response.status_code} {e.response.text[:200]}")
             if e.response.status_code == 429 and attempt < max_retries - 1:
                 retry_after = e.response.json().get("retry_after", 1)
-                print(f"Rate limited, waiting {retry_after}s...")
+                print(f"[webhook] Rate limited, waiting {retry_after}s...")
                 time.sleep(retry_after + 1)
                 continue
             raise
