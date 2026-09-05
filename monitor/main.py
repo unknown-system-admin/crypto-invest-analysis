@@ -288,13 +288,24 @@ def debug_bot():
     import base64
     all_keys = list(os.environ.keys())
     
-    # Show decoded config
     bot_token = CONFIG.get("discord", {}).get("bot_token", "")
     channel_id = CONFIG.get("discord", {}).get("channel_id", "")
     
-    return {
+    result = {
         "total_env_vars": len(all_keys),
         "bot_token_prefix": bot_token[:20] + "..." if bot_token else "EMPTY",
         "channel_id": channel_id if channel_id else "EMPTY",
         "config_source": "env" if os.environ.get("DISCORD_BOT_TOKEN") else "b64_decode",
     }
+    
+    if bot_token and channel_id:
+        url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
+        headers = {"Authorization": f"Bot {bot_token}"}
+        try:
+            resp = httpx.post(url, json={"content": "test"}, headers=headers, timeout=10)
+            result["test_status"] = resp.status_code
+            result["test_body"] = resp.text[:300]
+        except Exception as e:
+            result["test_error"] = str(e)
+    
+    return result
