@@ -1,6 +1,7 @@
 import yaml
 import os
 import base64
+import httpx
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional
