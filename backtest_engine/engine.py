@@ -19,6 +19,14 @@ class Position:
             return (self.current_price - self.entry_price) * self.quantity
         return (self.entry_price - self.current_price) * self.quantity
 
+    @property
+    def equity_value(self) -> float:
+        """Correct equity contribution: cash already excludes this position's cost."""
+        if self.side == "long":
+            return self.current_price * self.quantity
+        # Short: margin (entry cost, already deducted from cash) + PnL
+        return self.entry_price * self.quantity + self.unrealized_pnl
+
 
 @dataclass
 class BacktestResult:
@@ -43,6 +51,9 @@ class BacktestEngine:
     symbol: str = "BTC/USDT"
     max_drawdown_stop: float = 30.0
     timeframe: str = "1h"
+    trend_filter: bool = False
+    min_holding_bars: int = 0
+    cooldown_bars: int = 0
 
     def run(self, features: pd.DataFrame) -> BacktestResult:
         cash = self.initial_capital
@@ -51,6 +62,8 @@ class BacktestEngine:
         trades = []
         daily_trade_count = 0
         current_day = None
+        bars_held = 0
+        bars_since_exit = None
 
         for i, (idx, row) in enumerate(features.iterrows()):
             sig = self.strategy.evaluate(row)
@@ -72,7 +85,7 @@ class BacktestEngine:
 
             # Check drawdown
             peak = max(equity_curve) if equity_curve else cash
-            current_equity = cash + sum(p.unrealized_pnl for p in positions)
+            current_equity = cash + sum(p.equity_value for p in positions)
             drawdown = ((peak - current_equity) / peak * 100) if peak > 0 else 0
 
             if drawdown > self.max_drawdown_stop and positions:
@@ -92,57 +105,70 @@ class BacktestEngine:
 
             # Execute trades
             if daily_trade_count < self.max_daily_trades:
-                # Open long
-                if sig.direction == "偏多" and not positions:
-                    effective_price = price * (1 + self.slippage)
-                    qty = (cash * self.max_position_pct / 100) / effective_price
-                    if qty > 0:
-                        cost = qty * effective_price * (1 + self.fee_rate)
-                        if cost <= cash:
-                            cash -= cost
-                            positions.append(Position(self.symbol, "long", qty, effective_price))
-                            trades.append({"action": "buy", "price": effective_price, "quantity": qty})
-                            daily_trade_count += 1
+                sma200 = row.get("SMA_200")
 
-                # Open short
-                elif sig.direction == "偏空" and not positions:
-                    effective_price = price * (1 - self.slippage)
-                    # Use 25% of capital for short (margin requirement)
-                    margin_required = cash * self.max_position_pct / 100
-                    qty = margin_required / effective_price
-                    if qty > 0 and margin_required <= cash and margin_required > 0:
-                        # Short selling: deposit margin as collateral
-                        # When we close, we'll buy back at current price
-                        cash -= margin_required  # Reserve margin
-                        positions.append(Position(self.symbol, "short", qty, effective_price))
-                        trades.append({"action": "short_sell", "price": effective_price, "quantity": qty})
+                if positions:
+                    # Exit logic (min_holding gate; drawdown stop above is unaffected)
+                    if positions[0].side == "long" and sig.direction == "偏空" and bars_held >= self.min_holding_bars:
+                        pos = positions[0]
+                        effective_price = price * (1 - self.slippage)
+                        pnl = (effective_price * (1 - self.fee_rate) - pos.entry_price * (1 + self.fee_rate)) * pos.quantity
+                        cash += pos.quantity * effective_price * (1 - self.fee_rate)
+                        trades.append({"action": "sell", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
+                        positions.clear()
                         daily_trade_count += 1
+                        bars_held = 0
+                        bars_since_exit = 0
+                    elif positions[0].side == "short" and sig.direction == "偏多" and bars_held >= self.min_holding_bars:
+                        pos = positions[0]
+                        effective_price = price * (1 + self.slippage)
+                        pnl = (pos.entry_price * (1 - self.fee_rate) - effective_price * (1 + self.fee_rate)) * pos.quantity
+                        margin_returned = pos.entry_price * pos.quantity
+                        cash += margin_returned + pnl
+                        trades.append({"action": "cover", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
+                        positions.clear()
+                        daily_trade_count += 1
+                        bars_held = 0
+                        bars_since_exit = 0
+                    else:
+                        bars_held += 1
+                else:
+                    # Entry logic (trend filter + cooldown gate)
+                    cooldown_ok = bars_since_exit is None or bars_since_exit >= self.cooldown_bars
+                    trend_up = trend_down = True
+                    if self.trend_filter:
+                        if sma200 is None or pd.isna(sma200):
+                            trend_up = trend_down = False
+                        else:
+                            trend_up = price > sma200
+                            trend_down = price < sma200
 
-                # Close long
-                elif sig.direction == "偏空" and positions and positions[0].side == "long":
-                    pos = positions[0]
-                    effective_price = price * (1 - self.slippage)
-                    pnl = (effective_price * (1 - self.fee_rate) - pos.entry_price * (1 + self.fee_rate)) * pos.quantity
-                    cash += pos.quantity * effective_price * (1 - self.fee_rate)
-                    trades.append({"action": "sell", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
-                    positions.clear()
-                    daily_trade_count += 1
-
-                # Close short (buy to cover)
-                elif sig.direction == "偏多" and positions and positions[0].side == "short":
-                    pos = positions[0]
-                    effective_price = price * (1 + self.slippage)
-                    # Calculate PnL: profit = (entry - current) * qty
-                    pnl = (pos.entry_price * (1 - self.fee_rate) - effective_price * (1 + self.fee_rate)) * pos.quantity
-                    # Return margin + PnL
-                    margin_returned = pos.entry_price * pos.quantity
-                    cash += margin_returned + pnl
-                    trades.append({"action": "cover", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
-                    positions.clear()
-                    daily_trade_count += 1
+                    if cooldown_ok and sig.direction == "偏多" and trend_up:
+                        effective_price = price * (1 + self.slippage)
+                        qty = (cash * self.max_position_pct / 100) / effective_price
+                        if qty > 0:
+                            cost = qty * effective_price * (1 + self.fee_rate)
+                            if cost <= cash:
+                                cash -= cost
+                                positions.append(Position(self.symbol, "long", qty, effective_price, current_price=effective_price))
+                                trades.append({"action": "buy", "price": effective_price, "quantity": qty})
+                                daily_trade_count += 1
+                                bars_held = 0
+                    elif cooldown_ok and sig.direction == "偏空" and trend_down:
+                        effective_price = price * (1 - self.slippage)
+                        margin_required = cash * self.max_position_pct / 100
+                        qty = margin_required / effective_price
+                        if qty > 0 and margin_required <= cash and margin_required > 0:
+                            cash -= margin_required
+                            positions.append(Position(self.symbol, "short", qty, effective_price, current_price=effective_price))
+                            trades.append({"action": "short_sell", "price": effective_price, "quantity": qty})
+                            daily_trade_count += 1
+                            bars_held = 0
+                    if bars_since_exit is not None:
+                        bars_since_exit += 1
 
             # Update equity
-            unrealized = sum(p.unrealized_pnl for p in positions)
+            unrealized = sum(p.equity_value for p in positions)
             current_equity = cash + unrealized
             equity_curve.append(current_equity)
 
