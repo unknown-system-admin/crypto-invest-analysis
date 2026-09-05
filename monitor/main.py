@@ -241,3 +241,21 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
 @app.get("/health")
 def health():
     return {"status": "alive"}
+
+
+@app.get("/debug/webhook")
+def debug_webhook():
+    webhook = CONFIG["discord"]["webhook_url"]
+    import httpx
+    try:
+        resp = httpx.get(webhook, timeout=10)
+        return {
+            "webhook_url_prefix": webhook[:80] + "...",
+            "discord_status": resp.status_code,
+            "discord_body": resp.text[:500],
+        }
+    except Exception as e:
+        return {
+            "webhook_url_prefix": webhook[:80] + "...",
+            "error": str(e),
+        }
