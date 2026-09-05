@@ -285,9 +285,16 @@ def debug_webhook():
 
 @app.get("/debug/bot")
 def debug_bot():
-    import os
+    import base64
     all_keys = list(os.environ.keys())
+    
+    # Show decoded config
+    bot_token = CONFIG.get("discord", {}).get("bot_token", "")
+    channel_id = CONFIG.get("discord", {}).get("channel_id", "")
+    
     return {
         "total_env_vars": len(all_keys),
-        "all_keys": sorted(all_keys),
+        "bot_token_prefix": bot_token[:20] + "..." if bot_token else "EMPTY",
+        "channel_id": channel_id if channel_id else "EMPTY",
+        "config_source": "env" if os.environ.get("DISCORD_BOT_TOKEN") else "b64_decode",
     }
