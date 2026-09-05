@@ -1,4 +1,5 @@
 import yaml
+import os
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional
@@ -27,6 +28,12 @@ CONFIG_PATH = Path(__file__).parent / "config.yaml"
 
 with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
+
+# Override with environment variables if available (for Render deployment)
+if os.environ.get("DISCORD_BOT_TOKEN"):
+    CONFIG["discord"]["bot_token"] = os.environ["DISCORD_BOT_TOKEN"]
+if os.environ.get("DISCORD_CHANNEL_ID"):
+    CONFIG["discord"]["channel_id"] = os.environ["DISCORD_CHANNEL_ID"]
 
 app = FastAPI(title="Crypto Monitor")
 
