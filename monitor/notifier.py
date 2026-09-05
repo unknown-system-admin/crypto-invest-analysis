@@ -1,10 +1,10 @@
 import time
 import os
+import base64
 import yaml
 from pathlib import Path
 
 import httpx
-import discord
 from datetime import datetime
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -15,14 +15,20 @@ CONFIG_PATH = Path(__file__).parent / "config.yaml"
 with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
 
-# Override with environment variables if available (for Render deployment)
-if os.environ.get("DISCORD_BOT_TOKEN"):
-    CONFIG["discord"]["bot_token"] = os.environ["DISCORD_BOT_TOKEN"]
-if os.environ.get("DISCORD_CHANNEL_ID"):
-    CONFIG["discord"]["channel_id"] = os.environ["DISCORD_CHANNEL_ID"]
+def _decode_b64(val: str) -> str:
+    try:
+        return base64.b64decode(val).decode()
+    except Exception:
+        return val
 
-_bot_client = None
-_bot_channel = None
+bot_token = os.environ.get("DISCORD_BOT_TOKEN", "")
+channel_id = os.environ.get("DISCORD_CHANNEL_ID", "")
+if not bot_token and CONFIG.get("discord", {}).get("bot_token_b64"):
+    bot_token = _decode_b64(CONFIG["discord"]["bot_token_b64"])
+if not channel_id and CONFIG.get("discord", {}).get("channel_id_b64"):
+    channel_id = _decode_b64(CONFIG["discord"]["channel_id_b64"])
+CONFIG["discord"]["bot_token"] = bot_token
+CONFIG["discord"]["channel_id"] = channel_id
 
 DISCORD_COLORS = {
     "reversal": 0xFFA500,
@@ -31,41 +37,23 @@ DISCORD_COLORS = {
 }
 
 
-def get_bot_channel():
-    """Get or create Discord bot channel."""
-    global _bot_client, _bot_channel
-    
-    if _bot_channel is not None:
-        return _bot_channel
-    
+def send_bot_message(embed: dict) -> bool:
+    """Send message using Discord Bot REST API (no gateway needed)."""
     bot_token = CONFIG.get("discord", {}).get("bot_token", "")
     channel_id = CONFIG.get("discord", {}).get("channel_id", "")
-    
+
     if not bot_token or not channel_id:
-        return None
-    
-    try:
-        intents = discord.Intents.default()
-        _bot_client = discord.Client(intents=intents)
-        _bot_channel = _bot_client.get_channel(int(channel_id))
-        return _bot_channel
-    except Exception as e:
-        print(f"[bot] Failed to get channel: {e}")
-        return None
-
-
-def send_bot_message(embed: dict) -> bool:
-    """Send message using Discord bot."""
-    channel = get_bot_channel()
-    if channel is None:
         return False
-    
+
+    url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
+    headers = {"Authorization": f"Bot {bot_token}"}
+
     try:
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(
-            channel.send(embed=discord.Embed.from_dict(embed["embeds"][0]))
-        )
-        return True
+        resp = httpx.post(url, json=embed, headers=headers, timeout=15)
+        if resp.status_code in (200, 201):
+            return True
+        print(f"[bot] API error: {resp.status_code} {resp.text[:200]}")
+        return False
     except Exception as e:
         print(f"[bot] Send failed: {e}")
         return False
@@ -94,84 +82,48 @@ def build_strong_signal_embed(symbol: str, direction: str, bullish: int, total: 
     }
 
 
-def _interpret_delta(delta: float) -> str:
-    """Interpret delta value for display."""
-    if delta > 0.01:
-        return "↑ 快速上升"
-    elif delta > 0.001:
-        return "↗ 穩定上升"
-    elif delta > -0.001:
-        return "→ 持平"
-    elif delta > -0.01:
-        return "↘ 穩定下降"
-    else:
-        return "↓ 快速下降"
+def build_report_embed(symbol: str, summary: str, tf_results: list,
+                       momentum: Optional[str] = None,
+                       momentum_scores: Optional[list] = None) -> dict:
+    now = datetime.now(TAIWAN_TZ)
+    description = f"**{summary}**\n\n🕐 {now.strftime('%Y/%m/%d %H:%M')}"
 
+    if tf_results:
+        description += "\n\n**跨級別分析：**"
+        for r in tf_results:
+            if r.get("error"):
+                description += f"\n• {r['label']}: ❌"
+            else:
+                description += f"\n• {r['label']}: {r['direction']} (RSI {r['rsi']:.1f})"
 
-def build_report_embed(symbol: str, summary, tf_results: list,
-                       momentum: Optional[dict] = None,
-                       momentum_scores: Optional[list] = None,
-                       now: Optional[datetime] = None) -> dict:
-    if isinstance(summary, dict):
-        summary = "\n".join(f"{k}: {v}" for k, v in summary.items())
-    tf_lines = [f"{r['label']}: {r['direction']}" for r in tf_results]
-    triggered_at = (now or datetime.now()).astimezone(TAIWAN_TZ)
-    description = f"🕐 {triggered_at:%Y/%m/%d %H:%M}"
-    if summary:
-        description += f"\n{summary}"
-    if tf_lines:
-        description += "\n\n📈 **多時間框架**\n" + " | ".join(tf_lines)
     if momentum:
-        arrow = " → ".join(
-            f"{s['direction']}({s['strength']})" for s in momentum["states"])
-        description += f"\n\n⚡ **動能演進**: {arrow} — {momentum['label']}"
-    if momentum_scores and len(momentum_scores) >= 3:
-        # momentum_scores: [score_3bars_ago, score_2bars_ago, score_1bar_ago, current_score]
-        prev3, prev2, prev1, current = momentum_scores[-4:]
-        
-        # Calculate delta (first derivative) - trend direction
-        delta1 = current - prev1
-        delta2 = prev1 - prev2
-        delta3 = prev2 - prev3
-        
-        # Calculate acceleration (second derivative) - trend strength
-        acceleration = delta1 - delta2
-        
-        # Interpret deltas
-        delta1_interp = _interpret_delta(delta1)
-        delta2_interp = _interpret_delta(delta2)
-        delta3_interp = _interpret_delta(delta3)
-        
-        # Determine trend direction
-        if delta1 > 0.01:
-            trend_dir = "↑ 上升"
-        elif delta1 < -0.01:
-            trend_dir = "↓ 下降"
+        description += f"\n\n**動能趨勢：** {momentum}"
+
+    if momentum_scores and len(momentum_scores) >= 2:
+        prev = momentum_scores[-2]
+        curr = momentum_scores[-1]
+        delta = curr - prev
+        if len(momentum_scores) >= 3:
+            prev2 = momentum_scores[-3]
+            accel = delta - (prev - prev2)
         else:
-            trend_dir = "→ 持平"
-        
-        # Determine acceleration
-        if acceleration > 0.01:
-            accel_label = "加速"
-        elif acceleration < -0.01:
-            accel_label = "減速"
+            accel = 0
+
+        if delta > 0.01:
+            delta_label = "↑快速上升"
+        elif delta > 0.001:
+            delta_label = "↗穩定上升"
+        elif delta > -0.001:
+            delta_label = "→持平"
+        elif delta > -0.01:
+            delta_label = "↘穩定下降"
         else:
-            accel_label = "穩定"
-        
-        # Build score history
-        score_history = f"{prev3:.2f} → {prev2:.2f} → {prev1:.2f} → {current:.2f}"
-        
-        # Build delta history with interpretation
-        delta_history = f"{delta3:+.3f}({delta3_interp}) → {delta2:+.3f}({delta2_interp}) → {delta1:+.3f}({delta1_interp})"
-        
-        description += f"\n\n📊 **動能分數演進**: {score_history}"
-        description += f"\n📐 **動能微分**: {delta_history}"
-        description += f"\n🎯 **趨勢方向**: {trend_dir} | **加速度**: {accel_label} ({acceleration:+.3f})"
-    elif momentum_scores and len(momentum_scores) > 0:
-        current = momentum_scores[-1]
-        score_pct = int((current + 1) * 50)
-        bar = "█" * (score_pct // 5) + "░" * (20 - score_pct // 5)
-        description += f"\n\n📊 **動能分數**: {current:.3f} [{bar}]"
+            delta_label = "↓快速下降"
+
+        description += f"\n📊 **動能分數演化：** {prev:.3f} → {curr:.3f}"
+        description += f"\n📈 **1階導數（變化率）：** {delta:+.4f} ({delta_label})"
+        description += f"\n📉 **2階導數（加速度）：** {accel:+.5f}"
+
     return {
         "embeds": [{
             "title": f"📊 市場日報 — {symbol}",
@@ -183,33 +135,31 @@ def build_report_embed(symbol: str, summary, tf_results: list,
 
 def send_webhook(url: str, payload: dict, max_retries: int = 3) -> bool:
     """Send webhook with bot fallback."""
-    # Try bot first
     bot_ok = send_bot_message(payload)
     if bot_ok:
         return True
-    
-    # Fallback to webhook
+
     for attempt in range(max_retries):
         try:
             resp = httpx.post(url, json=payload, timeout=15)
-            
             if resp.status_code == 429:
                 retry_after = resp.json().get("retry_after", 5)
                 wait = max(retry_after + 2, 10 * (attempt + 1))
                 print(f"[webhook] 429 rate limited, waiting {wait}s (attempt {attempt+1})")
                 time.sleep(wait)
                 continue
-            
             resp.raise_for_status()
             return True
-            
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429 and attempt < max_retries - 1:
                 retry_after = e.response.json().get("retry_after", 5)
                 wait = max(retry_after + 2, 10 * (attempt + 1))
                 print(f"[webhook] 429 rate limited, waiting {wait}s (attempt {attempt+1})")
                 time.sleep(wait)
-                continue
-            raise
-    
+            else:
+                print(f"[webhook] Error: {e}")
+                return False
+        except Exception as e:
+            print(f"[webhook] Error: {e}")
+            return False
     return False

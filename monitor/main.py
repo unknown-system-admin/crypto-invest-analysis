@@ -1,5 +1,6 @@
 import yaml
 import os
+import base64
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional
@@ -20,7 +21,6 @@ from monitor.notifier import (
     build_reversal_embed,
     build_strong_signal_embed,
     build_report_embed,
-    send_webhook,
     send_bot_message,
 )
 
@@ -29,11 +29,20 @@ CONFIG_PATH = Path(__file__).parent / "config.yaml"
 with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
 
-# Override with environment variables if available (for Render deployment)
-if os.environ.get("DISCORD_BOT_TOKEN"):
-    CONFIG["discord"]["bot_token"] = os.environ["DISCORD_BOT_TOKEN"]
-if os.environ.get("DISCORD_CHANNEL_ID"):
-    CONFIG["discord"]["channel_id"] = os.environ["DISCORD_CHANNEL_ID"]
+def _decode_b64(val: str) -> str:
+    try:
+        return base64.b64decode(val).decode()
+    except Exception:
+        return val
+
+bot_token = os.environ.get("DISCORD_BOT_TOKEN", "")
+channel_id = os.environ.get("DISCORD_CHANNEL_ID", "")
+if not bot_token and CONFIG.get("discord", {}).get("bot_token_b64"):
+    bot_token = _decode_b64(CONFIG["discord"]["bot_token_b64"])
+if not channel_id and CONFIG.get("discord", {}).get("channel_id_b64"):
+    channel_id = _decode_b64(CONFIG["discord"]["channel_id_b64"])
+CONFIG["discord"]["bot_token"] = bot_token
+CONFIG["discord"]["channel_id"] = channel_id
 
 app = FastAPI(title="Crypto Monitor")
 
@@ -77,7 +86,7 @@ def check():
             changes = {"RSI": f"{result['subplots']['rsi']['RSI'].iloc[-1]:.1f}"}
             embed = build_reversal_embed(symbol, reversal["from"], reversal["to"], changes)
             try:
-                send_webhook(webhook, embed)
+                send_bot_message(embed)
                 alerts_sent.append(f"{symbol}: reversal {reversal['from']}→{reversal['to']}")
             except Exception:
                 pass
@@ -92,7 +101,7 @@ def check():
             embed = build_strong_signal_embed(symbol, strong["direction"],
                                               strong["bullish"], strong["total"])
             try:
-                send_webhook(webhook, embed)
+                send_bot_message(embed)
                 alerts_sent.append(f"{symbol}: strong {strong['direction']}")
                 new_sig["last_strong_notified"] = strong["direction"]
             except Exception:
@@ -136,7 +145,7 @@ def check():
                             }]
                         }
                         try:
-                            send_webhook(webhook, embed)
+                            send_bot_message(embed)
                             alerts_sent.append(f"{symbol}: BUY signal")
                         except Exception:
                             pass
@@ -155,7 +164,7 @@ def check():
                                 }]
                             }
                             try:
-                                send_webhook(webhook, embed)
+                                send_bot_message(embed)
                                 alerts_sent.append(f"{symbol}: SELL signal (PnL: ${order.pnl:+.2f})")
                             except Exception:
                                 pass
@@ -237,13 +246,13 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             embed = build_report_embed(symbol, summary, tf_results, 
                                       momentum=mtrend, 
                                       momentum_scores=recent_scores)
-            ok = send_webhook(webhook, embed)
+            ok = send_bot_message(embed)
             if ok:
                 reports_sent.append(symbol)
             else:
-                errors.append(f"{symbol}: send_webhook returned False (rate limited?)")
+                errors.append(f"{symbol}: send_bot_message failed")
         except Exception as e:
-            errors.append(f"{symbol}: send_webhook failed: {e}")
+            errors.append(f"{symbol}: send failed: {e}")
     return {"status": "ok",
             "reports": reports_sent, "errors": errors,
             "time": datetime.now(timezone.utc).isoformat()}
