@@ -38,14 +38,18 @@ DISCORD_COLORS = {
 
 
 def send_bot_message(embed: dict) -> bool:
-    """Send message using Discord Bot REST API (no gateway needed)."""
+    """Send message using Discord Bot REST API via Cloudflare Worker proxy."""
     bot_token = CONFIG.get("discord", {}).get("bot_token", "")
     channel_id = CONFIG.get("discord", {}).get("channel_id", "")
-    
+    proxy = CONFIG.get("discord", {}).get("api_proxy", "").rstrip("/")
+
     if not bot_token or not channel_id:
         return False
-    
-    url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
+
+    if proxy:
+        url = f"{proxy}?path=/channels/{channel_id}/messages"
+    else:
+        url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
     headers = {"Authorization": f"Bot {bot_token}"}
     
     try:
