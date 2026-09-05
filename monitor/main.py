@@ -21,6 +21,7 @@ from monitor.notifier import (
     build_reversal_embed,
     build_strong_signal_embed,
     build_report_embed,
+    send_webhook,
     send_bot_message,
 )
 
@@ -29,6 +30,7 @@ CONFIG_PATH = Path(__file__).parent / "config.yaml"
 with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
 
+# Decode base64 bot token and channel ID
 def _decode_b64(val: str) -> str:
     try:
         return base64.b64decode(val).decode()
@@ -86,7 +88,7 @@ def check():
             changes = {"RSI": f"{result['subplots']['rsi']['RSI'].iloc[-1]:.1f}"}
             embed = build_reversal_embed(symbol, reversal["from"], reversal["to"], changes)
             try:
-                send_bot_message(embed)
+                send_webhook(webhook, embed)
                 alerts_sent.append(f"{symbol}: reversal {reversal['from']}→{reversal['to']}")
             except Exception:
                 pass
@@ -101,7 +103,7 @@ def check():
             embed = build_strong_signal_embed(symbol, strong["direction"],
                                               strong["bullish"], strong["total"])
             try:
-                send_bot_message(embed)
+                send_webhook(webhook, embed)
                 alerts_sent.append(f"{symbol}: strong {strong['direction']}")
                 new_sig["last_strong_notified"] = strong["direction"]
             except Exception:
@@ -145,7 +147,7 @@ def check():
                             }]
                         }
                         try:
-                            send_bot_message(embed)
+                            send_webhook(webhook, embed)
                             alerts_sent.append(f"{symbol}: BUY signal")
                         except Exception:
                             pass
@@ -164,7 +166,7 @@ def check():
                                 }]
                             }
                             try:
-                                send_bot_message(embed)
+                                send_webhook(webhook, embed)
                                 alerts_sent.append(f"{symbol}: SELL signal (PnL: ${order.pnl:+.2f})")
                             except Exception:
                                 pass
@@ -279,3 +281,13 @@ def debug_webhook():
             "webhook_url_prefix": webhook[:80] + "...",
             "error": str(e),
         }
+
+
+@app.get("/debug/bot")
+def debug_bot():
+    import os
+    all_keys = list(os.environ.keys())
+    return {
+        "total_env_vars": len(all_keys),
+        "all_keys": sorted(all_keys),
+    }
