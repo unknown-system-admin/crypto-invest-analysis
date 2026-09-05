@@ -229,8 +229,11 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             embed = build_report_embed(symbol, summary, tf_results, 
                                       momentum=mtrend, 
                                       momentum_scores=recent_scores)
-            send_webhook(webhook, embed)
-            reports_sent.append(symbol)
+            ok = send_webhook(webhook, embed)
+            if ok:
+                reports_sent.append(symbol)
+            else:
+                errors.append(f"{symbol}: send_webhook returned False (rate limited?)")
         except Exception as e:
             errors.append(f"{symbol}: send_webhook failed: {e}")
     return {"status": "ok",
