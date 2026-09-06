@@ -8,7 +8,7 @@ class ModelStrategy(Strategy):
         self.feature_columns = feature_columns
         self.confidence_threshold = confidence_threshold
     
-    def evaluate(self, features) -> Signal:
+    def evaluate(self, features, side: str = "flat") -> Signal:
         try:
             X = np.array([[features[col] for col in self.feature_columns]])
             prediction = self.model.predict(X)[0]

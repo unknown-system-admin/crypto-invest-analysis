@@ -52,6 +52,7 @@ class BacktestEngine:
     max_drawdown_stop: float = 30.0
     timeframe: str = "1h"
     trend_filter: bool = False
+    strong_filter: bool = False
     min_holding_bars: int = 0
     cooldown_bars: int = 0
 
@@ -66,7 +67,6 @@ class BacktestEngine:
         bars_since_exit = None
 
         for i, (idx, row) in enumerate(features.iterrows()):
-            sig = self.strategy.evaluate(row)
             price = row.get("close", 0)
 
             if price == 0:
@@ -105,7 +105,11 @@ class BacktestEngine:
 
             # Execute trades
             if daily_trade_count < self.max_daily_trades:
+                # Evaluate signal AFTER drawdown stop so `side` reflects current state
+                current_side = positions[0].side if positions else "flat"
+                sig = self.strategy.evaluate(row, current_side)
                 sma200 = row.get("SMA_200")
+                sma50 = row.get("SMA_50")
 
                 if positions:
                     # Exit logic (min_holding gate; drawdown stop above is unaffected)
@@ -139,6 +143,12 @@ class BacktestEngine:
                     if self.trend_filter:
                         if sma200 is None or pd.isna(sma200):
                             trend_up = trend_down = False
+                        elif self.strong_filter:
+                            if sma50 is None or pd.isna(sma50):
+                                trend_up = trend_down = False
+                            else:
+                                trend_up = price > sma200 and sma50 > sma200
+                                trend_down = price < sma200 and sma50 < sma200
                         else:
                             trend_up = price > sma200
                             trend_down = price < sma200

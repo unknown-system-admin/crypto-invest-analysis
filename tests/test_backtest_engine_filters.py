@@ -2,15 +2,16 @@ import pandas as pd
 import numpy as np
 from backtest_engine.engine import BacktestEngine
 from backtest_engine.strategy import Strategy, Signal
+from backtest_engine.rule_strategy import MomentumRuleStrategy
 
 
 class AlwaysLong(Strategy):
-    def evaluate(self, features: pd.Series) -> Signal:
+    def evaluate(self, features: pd.Series, side: str = "flat") -> Signal:
         return Signal("偏多", 0.8, "test")
 
 
 class AlwaysShort(Strategy):
-    def evaluate(self, features: pd.Series) -> Signal:
+    def evaluate(self, features: pd.Series, side: str = "flat") -> Signal:
         return Signal("偏空", 0.8, "test")
 
 
@@ -20,7 +21,7 @@ class FlipAfter(Strategy):
         self.n = n
         self.count = 0
 
-    def evaluate(self, features: pd.Series) -> Signal:
+    def evaluate(self, features: pd.Series, side: str = "flat") -> Signal:
         self.count += 1
         if self.count <= self.n:
             return Signal("偏多", 0.8, "test")
@@ -31,23 +32,25 @@ class Alternating(Strategy):
     def __init__(self):
         self.count = 0
 
-    def evaluate(self, features: pd.Series) -> Signal:
+    def evaluate(self, features: pd.Series, side: str = "flat") -> Signal:
         self.count += 1
         if self.count % 2 == 1:
             return Signal("偏多", 0.8, "test")
         return Signal("偏空", 0.8, "test")
 
 
-def _make_features(closes, sma200=None):
+def _make_features(closes, sma200=None, sma50=None):
     dates = pd.date_range("2024-01-01", periods=len(closes), freq="1h")
     data = {"momentum_score": [0.9] * len(closes), "close": closes}
     if sma200 is not None:
         data["SMA_200"] = sma200
+    if sma50 is not None:
+        data["SMA_50"] = sma50
     return pd.DataFrame(data, index=dates)
 
 
 def test_trend_filter_blocks_long_below_sma200():
-    features = _make_features([40000.0] * 50, sma200=[50000.0] * 50)
+    features = _make_features([40000.0] * 50, sma200=[50000.0] * 50, sma50=[55000.0] * 50)
     engine = BacktestEngine(
         strategy=AlwaysLong(),
         trend_filter=True,
@@ -58,7 +61,7 @@ def test_trend_filter_blocks_long_below_sma200():
 
 
 def test_trend_filter_allows_long_above_sma200():
-    features = _make_features([50000.0] * 50, sma200=[40000.0] * 50)
+    features = _make_features([50000.0] * 50, sma200=[40000.0] * 50, sma50=[45000.0] * 50)
     engine = BacktestEngine(
         strategy=AlwaysLong(),
         trend_filter=True,
@@ -69,7 +72,7 @@ def test_trend_filter_allows_long_above_sma200():
 
 
 def test_trend_filter_blocks_short_above_sma200():
-    features = _make_features([50000.0] * 50, sma200=[40000.0] * 50)
+    features = _make_features([50000.0] * 50, sma200=[40000.0] * 50, sma50=[45000.0] * 50)
     engine = BacktestEngine(
         strategy=AlwaysShort(),
         trend_filter=True,
@@ -80,7 +83,7 @@ def test_trend_filter_blocks_short_above_sma200():
 
 
 def test_trend_filter_allows_short_below_sma200():
-    features = _make_features([40000.0] * 50, sma200=[50000.0] * 50)
+    features = _make_features([40000.0] * 50, sma200=[50000.0] * 50, sma50=[45000.0] * 50)
     engine = BacktestEngine(
         strategy=AlwaysShort(),
         trend_filter=True,
@@ -88,6 +91,70 @@ def test_trend_filter_allows_short_below_sma200():
     )
     result = engine.run(features)
     assert result.total_trades >= 1
+
+
+def test_strong_filter_blocks_long_on_single_candle_bounce():
+    # close > SMA_200 BUT SMA_50 < SMA_200 -> old filter would buy (bounce trap),
+    # strong filter must block
+    features = _make_features([50000.0] * 50, sma200=[45000.0] * 50, sma50=[40000.0] * 50)
+    engine = BacktestEngine(
+        strategy=AlwaysLong(),
+        trend_filter=True,
+        strong_filter=True,
+        max_position_pct=50,
+    )
+    result = engine.run(features)
+    assert result.total_trades == 0
+
+
+def test_strong_filter_allows_long_when_sma50_above_sma200():
+    features = _make_features([50000.0] * 50, sma200=[45000.0] * 50, sma50=[48000.0] * 50)
+    engine = BacktestEngine(
+        strategy=AlwaysLong(),
+        trend_filter=True,
+        strong_filter=True,
+        max_position_pct=50,
+    )
+    result = engine.run(features)
+    assert result.total_trades >= 1
+
+
+def test_strong_filter_blocks_short_when_sma50_above_sma200():
+    # close < SMA_200 but SMA_50 > SMA_200 -> short blocked (uptrend intact)
+    features = _make_features([40000.0] * 50, sma200=[50000.0] * 50, sma50=[55000.0] * 50)
+    engine = BacktestEngine(
+        strategy=AlwaysShort(),
+        trend_filter=True,
+        strong_filter=True,
+        max_position_pct=50,
+    )
+    result = engine.run(features)
+    assert result.total_trades == 0
+
+
+def test_split_threshold_enables_more_shorts_in_bear():
+    # score hovers at -0.20: below new short_entry (-0.15), above old gate (-0.30)
+    # old config: no shorts at all. new config: shorts fire.
+    n = 40
+    dates = pd.date_range("2024-01-01", periods=n, freq="1h")
+    features = pd.DataFrame({
+        "momentum_score": [-0.20] * n,
+        "momentum_delta": [-0.05] * n,
+        "close": [40000 - 100 * i for i in range(n)],
+        "SMA_200": [50000.0] * n,
+        "SMA_50": [45000.0] * n,
+    }, index=dates)
+
+    old = BacktestEngine(
+        strategy=MomentumRuleStrategy(buy_threshold=0.05, sell_threshold=-0.30, short_entry_threshold=-0.30),
+        max_position_pct=50, trend_filter=True,
+    )
+    new = BacktestEngine(
+        strategy=MomentumRuleStrategy(buy_threshold=0.05, sell_threshold=-0.30, short_entry_threshold=-0.15),
+        max_position_pct=50, trend_filter=True,
+    )
+
+    assert new.run(features).total_trades > old.run(features).total_trades
 
 
 def test_trend_filter_ignores_missing_sma200():

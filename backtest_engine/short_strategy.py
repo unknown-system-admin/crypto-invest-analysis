@@ -6,7 +6,7 @@ class MomentumShortStrategy(Strategy):
         self.buy_threshold = buy_threshold
         self.sell_threshold = sell_threshold
 
-    def evaluate(self, features) -> Signal:
+    def evaluate(self, features, side: str = "flat") -> Signal:
         score = features.get("momentum_score", 0)
         delta = features.get("momentum_delta", 0)
 
@@ -24,7 +24,7 @@ class MLShortStrategy(Strategy):
         self.scaler = scaler
         self.threshold = threshold
 
-    def evaluate(self, features) -> Signal:
+    def evaluate(self, features, side: str = "flat") -> Signal:
         feature_cols = ["SMA_20", "SMA_50", "RSI", "MACD", "ATR", "MFI", "OBV", "close", "momentum_score", "momentum_delta"]
         X = [[features.get(col, 0) for col in feature_cols]]
         X_scaled = self.scaler.transform(X)

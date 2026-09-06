@@ -149,7 +149,7 @@ uvicorn monitor.main:app --port 8000
 
 ## 策略驗證結果（2026-09，多折 walk-forward）
 
-**採用配置（兩資產通用，1d）**：`buy=0.05, sell=-0.30, cooldown=3, trend_filter=True, min_holding=0, dd_stop=50, pos=95%`
+**採用配置（兩資產通用，1d）**：`buy=0.05, sell=-0.30, short_entry=-0.30(同sell), cooldown=3, trend_filter=True(簡單版), strong_filter=False, min_holding=0, dd_stop=50, pos=95%`
 
 | 資產 | 固定配置（OOS 3 折複合） | B&H | 逐折重選 grid |
 |------|----------------------|-----|--------------|
@@ -161,3 +161,9 @@ uvicorn monitor.main:app --port 8000
 2. **逐折重新選參數會過擬合** — 樣本外反而虧損；參數應凍結，不要定期重選
 3. 誠實聲明：BTC 數字部分為重疊樣本（配置源自含測試期的全樣本 grid）；**SOL 是乾淨的跨資產轉移驗證**（+11.86% vs B&H -38.80%）
 4. 2022 引擎權益 bug（持倉權益漏算持倉市值 → 假回撤觸發停損螺旋）已修復；修復前所有回測數字（含 -99.3%）作廢
+
+**已驗證否決的改進**（walk-forward 證實更差，勿用）：
+- 拆分門檻（`short_entry=-0.15` 提前放空）：牛市誤放空 → 熊市獲利抵不過牛市虧損（BTC +15.41% → -27.87%）
+- SMA_50 強過濾（`strong_filter=True`）：延遲牛市再進場，買在更高點
+- 教訓：深度 -0.30 放空門檻不是 bug，是紀律 — 只在動能真正崩潰時放空才是可靠下跌預測
+- 上述能力保留為策略/引擎參數（`short_entry_threshold`、`strong_filter`），預設關閉

@@ -5,7 +5,7 @@ from backtest_engine.strategy import Strategy, Signal
 
 
 class DummyStrategy(Strategy):
-    def evaluate(self, features: pd.Series) -> Signal:
+    def evaluate(self, features: pd.Series, side: str = "flat") -> Signal:
         if features.get("momentum_score", 0) > 0.5:
             return Signal("偏多", 0.8, "dummy")
         elif features.get("momentum_score", 0) < -0.5:

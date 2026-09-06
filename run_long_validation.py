@@ -16,7 +16,9 @@ from backtest_engine.engine import BacktestEngine
 from backtest_engine.rule_strategy import MomentumRuleStrategy
 
 INITIAL = 10000.0
-FIXED = dict(buy=0.05, sell=-0.30, hold=0, cool=3, tf=True)
+# VALIDATED config: single deep threshold + simple trend filter.
+# (Split thresholds / strong filter tested worse in walk-forward — see README.)
+FIXED = dict(buy=0.05, sell=-0.30, short_entry=-0.30, hold=0, cool=3, tf=True, strong=False)
 
 GRID = dict(
     buy_ths=[0.05, 0.10, 0.15, 0.20, 0.25, 0.30],
@@ -27,14 +29,16 @@ GRID = dict(
 )
 
 
-def run_one(df_part, buy, sell, hold, cool, tf):
+def run_one(df_part, buy, sell, short_entry, hold, cool, tf, strong=False):
     engine = BacktestEngine(
-        strategy=MomentumRuleStrategy(buy_threshold=buy, sell_threshold=sell),
+        strategy=MomentumRuleStrategy(buy_threshold=buy, sell_threshold=sell,
+                                      short_entry_threshold=short_entry),
         initial_capital=INITIAL,
         timeframe="1d",
         max_position_pct=95,
         max_drawdown_stop=50,
         trend_filter=tf,
+        strong_filter=strong,
         min_holding_bars=hold,
         cooldown_bars=cool,
     )
@@ -73,17 +77,18 @@ def validate(symbol):
         test = features.iloc[a:b]
         period = f"{test.index[0].date()}~{test.index[-1].date()}"
 
-        # Grid select on train
+        # Grid select on train (short_entry = single gate, matching validated config)
         best = None
         for buy, sell, hold, cool, tf in product(GRID["buy_ths"], GRID["sell_ths"],
                                                   GRID["holds"], GRID["cools"], GRID["filters"]):
-            r = run_one(train, buy, sell, hold, cool, tf)
+            r = run_one(train, buy, sell, sell, hold, cool, tf)
             if best is None or r.total_return_pct > best[0]:
                 best = (r.total_return_pct, buy, sell, hold, cool, tf)
 
         _, buy, sell, hold, cool, tf = best
-        r_sel = run_one(test, buy, sell, hold, cool, tf)
-        r_fix = run_one(test, **{**FIXED, "tf": FIXED["tf"]})
+        r_sel = run_one(test, buy, sell, sell, hold, cool, tf)
+        r_fix = run_one(test, FIXED["buy"], FIXED["sell"], FIXED["short_entry"],
+                        FIXED["hold"], FIXED["cool"], FIXED["tf"], FIXED["strong"])
         bh_ret = bh(test)
 
         cfg = f"b{buy} s{sell} h{hold} c{cool} f{int(tf)}"

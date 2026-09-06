@@ -7,7 +7,7 @@ class MeanReversionStrategy(Strategy):
         for k, v in params.items():
             setattr(self, k, v)
 
-    def evaluate(self, features) -> Signal:
+    def evaluate(self, features, side: str = "flat") -> Signal:
         """
         Features available:
         - momentum_score, momentum_delta

@@ -10,7 +10,7 @@ class FixedStrategy(Strategy):
         self.directions = directions
         self.idx = 0
     
-    def evaluate(self, features: pd.Series) -> Signal:
+    def evaluate(self, features: pd.Series, side: str = "flat") -> Signal:
         if self.idx < len(self.directions):
             direction = self.directions[self.idx]
             self.idx += 1
