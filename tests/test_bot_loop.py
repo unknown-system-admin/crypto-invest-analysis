@@ -176,3 +176,51 @@ def test_equity_sums_across_positions():
         },
     }
     assert _equity_estimate(state) == 10190.0
+
+
+def test_loop_trailing_stop_fires_after_peak(tmp_path):
+    """After an entry, price rising then falling below the ATR trailing stop must
+    realize the position via the trailing stop (not the hard stop-loss floor).
+    Confirms the loop tracks peak and fires the trailing stop on the drawdown."""
+    logs = []
+    cfg = BotConfig(dry_run=True, poll_seconds=0, symbols=["BTC/USDT:USDT"],
+                    atr_stop_mult=0.02, min_atr_pct=0.0)  # tiny mult -> tight trailing stop
+    calls = {"n": 0}
+
+    def series(trend, base, n=300):
+        idx = pd.date_range("2026-01-01", periods=n, freq="5min")
+        close = base * (1 + trend) ** np.arange(n)
+        return pd.DataFrame({"open": close*0.999, "high": close*1.002, "low": close*0.998,
+                             "close": close, "volume": 100.0}, index=idx)
+
+    def fetcher(symbol, timeframe, limit):
+        calls["n"] += 1
+        if timeframe == "1h":
+            return series(0.0005, 40000.0)
+        # LTF: first bar is a V-shape so an up-cross entry fires, then the price
+        # falls a modest ~5.8% (below the tight trailing stop but under the 10%
+        # daily-loss kill switch) so the trailing stop, not daily loss, realizes it.
+        if calls["n"] <= 3:
+            return _v_ohlcv(limit, dip=0.02, up=0.02)
+        return series(-0.0008, 40000.0, n=50)
+
+    run_bot(cfg, executor=None, fetch_fn=fetcher, state_path=tmp_path / "s.json",
+            max_iterations=8, logger=logs.append)
+    state = __import__("bot.state", fromlist=["load_state"]).load_state(tmp_path / "s.json")
+    assert state["positions"]["BTC/USDT:USDT"] is None
+    assert any("trailing stop" in line for line in logs), logs
+
+
+def test_loop_vol_filter_blocks_low_vol_entry(tmp_path):
+    """A signal that would fire enter_long must still be blocked when ATR is
+    below the volatility threshold (low-vol flat series), and the loop must log
+    the rejection. Confirms the vol filter is the gate, not the signal logic."""
+    logs = []
+    cfg = BotConfig(dry_run=True, poll_seconds=0, symbols=["BTC/USDT:USDT"], min_atr_pct=10.0)
+    fetcher = FakeFetcher(htf=_ohlcv(cfg.htf_candles, 0.0005),
+                          ltf=_v_ohlcv(cfg.ltf_candles))
+    run_bot(cfg, executor=None, fetch_fn=fetcher, state_path=tmp_path / "s.json",
+            max_iterations=5, logger=logs.append)
+    state = __import__("bot.state", fromlist=["load_state"]).load_state(tmp_path / "s.json")
+    assert state["positions"]["BTC/USDT:USDT"] is None
+    assert any("volatility" in line for line in logs), logs

@@ -1,9 +1,9 @@
 import time
 from datetime import datetime, timezone
 
-from bot.signals import evaluate
+from bot.signals import evaluate, latest_atr, volatility_ok
 from bot.state import STATE_PATH, init_state, load_state, save_state
-from bot.risk import (check_daily_loss, check_stop_loss,
+from bot.risk import (check_daily_loss, check_trailing_stop,
                       check_position_limit, position_notional)
 
 
@@ -95,10 +95,16 @@ def _tick(cfg, executor, fetch_fn, state, symbol, logger):
             state["positions"][symbol] = None
         return
 
-    # --- per-trade stop loss ---
+    # --- trailing stop (updates peak, then checks ATR/hard-stop floor) ---
     if pos is not None:
-        if check_stop_loss(pos["entry_price"], price, pos["side"], cfg.stop_loss_pct):
-            logger(f"[{symbol}] stop loss hit ({cfg.stop_loss_pct:.1%}) @ {price:.2f}")
+        if pos["side"] == "long":
+            pos["peak"] = max(pos.get("peak", pos["entry_price"]), price)
+        else:
+            pos["peak"] = min(pos.get("peak", pos["entry_price"]), price)
+        atr = latest_atr(df_ltf)
+        if check_trailing_stop(pos["entry_price"], pos["peak"], price, atr,
+                               pos["side"], cfg.atr_stop_mult, cfg.stop_loss_pct):
+            logger(f"[{symbol}] trailing stop hit @ {price:.2f}")
             _realize(state, symbol, pos, price)
             if not cfg.dry_run:
                 executor.close_position(symbol, pos["side"])
@@ -112,6 +118,9 @@ def _tick(cfg, executor, fetch_fn, state, symbol, logger):
         limit = check_position_limit(open_symbols, symbol)
         if not limit.allowed:
             return
+        if not volatility_ok(df_ltf, cfg.min_atr_pct):
+            logger(f"[{symbol}] volatility below threshold, skip entry")
+            return
 
     # --- signal ---
     sig = evaluate(df_htf, df_ltf, cfg.htf_threshold, side)
@@ -124,7 +133,7 @@ def _tick(cfg, executor, fetch_fn, state, symbol, logger):
         logger(f"[{symbol}] {sig.action} @ {price:.2f} (score={sig.htf_score:.3f})")
         if cfg.dry_run:
             state["positions"][symbol] = {"side": "long" if sig.action == "enter_long" else "short",
-                                          "entry_price": price, "qty": qty,
+                                          "entry_price": price, "qty": qty, "peak": price,
                                           "entry_time": datetime.now(timezone.utc).isoformat()}
         else:
             executor.set_leverage(symbol, cfg.leverage)
@@ -133,7 +142,7 @@ def _tick(cfg, executor, fetch_fn, state, symbol, logger):
             else:
                 executor.open_short(symbol, notional)
             state["positions"][symbol] = {"side": "long" if sig.action == "enter_long" else "short",
-                                          "entry_price": price, "qty": qty,
+                                          "entry_price": price, "qty": qty, "peak": price,
                                           "entry_time": datetime.now(timezone.utc).isoformat()}
 
     elif sig.action in ("exit_long", "exit_short"):
