@@ -43,3 +43,22 @@ def test_evaluate_meanrev_exit_long_on_reversion(monkeypatch):
     monkeypatch.setattr(mr, "latest_rsi", lambda df: pd.Series([50.0, 58.0]))  # >= exit 55
     sig = evaluate_meanrev(None, None, 25, 75, side="long")
     assert sig.action == "exit_long"
+
+
+def test_evaluate_meanrev_entry_requires_funding_alignment(monkeypatch):
+    import bot.meanreversion as mr
+    # RSI oversold (would enter_long), but funding bias = "short" (crowded longs)
+    monkeypatch.setattr(mr, "latest_rsi", lambda df: pd.Series([40.0, 40.0, 24.0]))
+    monkeypatch.setattr(mr, "htf_trend_up", lambda df_htf: True)
+    monkeypatch.setattr(mr, "htf_trend_down", lambda df_htf: False)
+    sig = evaluate_meanrev(None, None, 25, 75, "flat", funding_bias="short")
+    assert sig.action == "none"   # blocked: funding says short, RSI says buy -> conflict
+
+
+def test_evaluate_meanrev_entry_allows_funding_aligned(monkeypatch):
+    import bot.meanreversion as mr
+    monkeypatch.setattr(mr, "latest_rsi", lambda df: pd.Series([40.0, 40.0, 24.0]))
+    monkeypatch.setattr(mr, "htf_trend_up", lambda df_htf: True)
+    monkeypatch.setattr(mr, "htf_trend_down", lambda df_htf: False)
+    sig = evaluate_meanrev(None, None, 25, 75, "flat", funding_bias="long")
+    assert sig.action == "enter_long"

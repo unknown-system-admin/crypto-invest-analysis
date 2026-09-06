@@ -26,7 +26,7 @@ def htf_trend_down(df_htf: pd.DataFrame) -> bool:
 
 
 def evaluate_meanrev(df_htf, df_ltf, oversold, overbought, side="flat",
-                     exit_long_rsi=55.0, exit_short_rsi=45.0) -> Signal:
+                     exit_long_rsi=55.0, exit_short_rsi=45.0, funding_bias="neutral") -> Signal:
     rsi = latest_rsi(df_ltf)
     prev_rsi = float(rsi.iloc[-2])
     curr_rsi = float(rsi.iloc[-1])
@@ -39,8 +39,10 @@ def evaluate_meanrev(df_htf, df_ltf, oversold, overbought, side="flat",
         if curr_rsi <= exit_short_rsi:
             return Signal("exit_short", curr_rsi)
         return Signal("none", curr_rsi)
-    if htf_trend_up(df_htf) and prev_rsi > oversold and curr_rsi <= oversold:
+    if htf_trend_up(df_htf) and prev_rsi > oversold and curr_rsi <= oversold \
+            and (funding_bias == "neutral" or funding_bias == "long"):
         return Signal("enter_long", curr_rsi)
-    if htf_trend_down(df_htf) and prev_rsi < overbought and curr_rsi >= overbought:
+    if htf_trend_down(df_htf) and prev_rsi < overbought and curr_rsi >= overbought \
+            and (funding_bias == "neutral" or funding_bias == "short"):
         return Signal("enter_short", curr_rsi)
     return Signal("none", curr_rsi)
