@@ -55,3 +55,17 @@ def evaluate(df_htf: pd.DataFrame, df_ltf: pd.DataFrame,
     if direction == "short" and _down_cross(prev_delta, curr_delta):
         return Signal("enter_short", htf_score, curr_delta)
     return Signal("none", htf_score, curr_delta)
+
+
+def latest_atr(df: pd.DataFrame) -> float:
+    ind = compute_all_indicators(df)
+    val = ind["ATR"].iloc[-1]
+    return float(val) if pd.notna(val) else 0.0
+
+
+def volatility_ok(df_ltf: pd.DataFrame, min_atr_pct: float) -> bool:
+    atr = latest_atr(df_ltf)
+    close = float(df_ltf["close"].iloc[-1])
+    if close <= 0:
+        return False
+    return atr / close >= min_atr_pct

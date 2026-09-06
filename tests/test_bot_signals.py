@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from bot.signals import evaluate, momentum_series, htf_direction_from_score
+from bot.signals import volatility_ok, latest_atr
 
 
 def _ohlcv(n, trend=0.0001, base=40000.0):
@@ -94,3 +95,21 @@ def test_evaluate_exit_long_when_direction_flips(monkeypatch):
     monkeypatch.setattr(sigs, "momentum_series", fake_momentum)
     sig = sigs.evaluate(None, None, 0.10, side="long")
     assert sig.action == "exit_long"
+
+
+def test_latest_atr_returns_positive():
+    df = _ohlcv(300, trend=0.0005)
+    assert latest_atr(df) > 0
+
+
+def test_volatility_ok_high_vol():
+    df = _ohlcv(300, trend=0.0005)
+    assert volatility_ok(df, min_atr_pct=0.0001) is True
+
+
+def test_volatility_ok_low_vol_blocked():
+    idx = pd.date_range("2026-01-01", periods=300, freq="5min")
+    close = pd.Series([40000.0] * 300, index=idx)  # perfectly flat -> ATR ~0
+    df = pd.DataFrame({"open": close, "high": close, "low": close,
+                       "close": close, "volume": 100.0}, index=idx)
+    assert volatility_ok(df, min_atr_pct=0.0001) is False
