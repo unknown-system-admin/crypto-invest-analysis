@@ -167,3 +167,20 @@ uvicorn monitor.main:app --port 8000
 - SMA_50 強過濾（`strong_filter=True`）：延遲牛市再進場，買在更高點
 - 教訓：深度 -0.30 放空門檻不是 bug，是紀律 — 只在動能真正崩潰時放空才是可靠下跌預測
 - 上述能力保留為策略/引擎參數（`short_entry_threshold`、`strong_filter`），預設關閉
+
+## HFT 槓桿機器人（OKX demo）
+
+本地執行的日內機器人（`bot/`），混合訊號（1h 動能方向 + 15m 動能 delta），5x 逐倉槓桿。
+
+```bash
+# 訊號模式（不下單）
+python -m bot.run_bot --dry-run
+
+# OKX demo 模式（需設定 OKX_API_KEY / OKX_API_SECRET / OKX_API_PASSPHRASE）
+python -m bot.run_bot --live
+```
+
+風險控制：單日 -10% 強制停、單筆 -2.5% 停損、每資產 1 倉、崩潰重啟對帳。
+⚠️ 尚未實作：`--live` 開機對帳（載入 state 後需呼叫 executor.get_open_symbols() 校正實際倉位）。上 `--live` 前必須先實作。
+⚠️ M1 校準（2026-09-06，15m/14 天）顯示混合訊號目前無明顯正向 edge（BTC -0.7% / SOL +0.4%），門檻值僅為初步，上真錢前需重新驗證。
+詳細設計見 `docs/superpowers/specs/2026-09-06-hft-bot-design.md`。

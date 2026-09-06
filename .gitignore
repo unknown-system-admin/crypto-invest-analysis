@@ -3,4 +3,5 @@
 .worktrees/
 monitor/signal_state.json
 monitor/record.json
+bot/state.json
 .DS_Store
