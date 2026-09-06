@@ -16,6 +16,9 @@ class BotConfig:
     stop_loss_pct: float = 0.025
     atr_stop_mult: float = 2.5
     min_atr_pct: float = 0.0015
+    signal_mode: str = "momentum"  # "momentum" | "meanreversion"
+    rsi_oversold: int = 25
+    rsi_overbought: int = 75
     max_daily_loss_pct: float = 0.10
     poll_seconds: int = 20
     dry_run: bool = True

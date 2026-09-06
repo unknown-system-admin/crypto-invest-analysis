@@ -224,3 +224,23 @@ def test_loop_vol_filter_blocks_low_vol_entry(tmp_path):
     state = __import__("bot.state", fromlist=["load_state"]).load_state(tmp_path / "s.json")
     assert state["positions"]["BTC/USDT:USDT"] is None
     assert any("volatility" in line for line in logs), logs
+
+
+def test_loop_meanreversion_mode_uses_meanrev_signal(tmp_path, monkeypatch):
+    import bot.loop as loop_mod
+    from bot.meanreversion import Signal as MrSignal
+    logs = []
+    cfg = BotConfig(dry_run=True, poll_seconds=0, symbols=["BTC/USDT:USDT"],
+                    signal_mode="meanreversion", min_atr_pct=0.0)
+
+    fake_eval = lambda df_htf, df_ltf, oversold, overbought, side="flat": \
+        MrSignal("enter_long", 24.0)
+    monkeypatch.setattr(loop_mod, "evaluate_meanrev", fake_eval)
+
+    fetcher = FakeFetcher(htf=_ohlcv(cfg.htf_candles, 0.0005),
+                          ltf=_ohlcv(cfg.ltf_candles, 0.0005))
+    run_bot(cfg, executor=None, fetch_fn=fetcher, state_path=tmp_path / "s.json",
+            max_iterations=3, logger=logs.append)
+    state = __import__("bot.state", fromlist=["load_state"]).load_state(tmp_path / "s.json")
+    assert state["positions"]["BTC/USDT:USDT"] is not None
+    assert state["positions"]["BTC/USDT:USDT"]["side"] == "long"

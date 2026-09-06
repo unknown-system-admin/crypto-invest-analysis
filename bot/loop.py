@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timezone
 
 from bot.signals import evaluate, latest_atr, volatility_ok
+from bot.meanreversion import evaluate_meanrev
 from bot.state import STATE_PATH, init_state, load_state, save_state
 from bot.risk import (check_daily_loss, check_trailing_stop,
                       check_position_limit, position_notional)
@@ -123,14 +124,21 @@ def _tick(cfg, executor, fetch_fn, state, symbol, logger):
             return
 
     # --- signal ---
-    sig = evaluate(df_htf, df_ltf, cfg.htf_threshold, side)
+    if cfg.signal_mode == "meanreversion":
+        sig = evaluate_meanrev(df_htf, df_ltf, cfg.rsi_oversold, cfg.rsi_overbought, side)
+    else:
+        sig = evaluate(df_htf, df_ltf, cfg.htf_threshold, side)
     if sig.action == "none":
         return
 
     if sig.action in ("enter_long", "enter_short"):
         notional = position_notional(equity, cfg.margin_pct, cfg.leverage)
         qty = notional / price
-        logger(f"[{symbol}] {sig.action} @ {price:.2f} (score={sig.htf_score:.3f})")
+        htf_score = getattr(sig, "htf_score", None)
+        if htf_score is None:
+            logger(f"[{symbol}] {sig.action} @ {price:.2f}")
+        else:
+            logger(f"[{symbol}] {sig.action} @ {price:.2f} (score={htf_score:.3f})")
         if cfg.dry_run:
             state["positions"][symbol] = {"side": "long" if sig.action == "enter_long" else "short",
                                           "entry_price": price, "qty": qty, "peak": price,
