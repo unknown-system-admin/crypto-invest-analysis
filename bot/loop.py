@@ -7,16 +7,37 @@ from bot.risk import (check_daily_loss, check_stop_loss,
                       check_position_limit, position_notional)
 
 
-def _equity_estimate(state, price):
-    """Approximate equity: start + realized + unrealized on open position."""
-    pos = next((p for p in state["positions"].values() if p is not None), None)
+def _equity_estimate(state):
+    """Approximate equity: start + realized + sum of unrealized across all
+    open positions (each position stores its own mark-to-market)."""
     unrealized = 0.0
-    if pos is not None and pos.get("entry_price"):
-        if pos["side"] == "long":
-            unrealized = (price - pos["entry_price"]) * pos["qty"]
-        else:
-            unrealized = (pos["entry_price"] - price) * pos["qty"]
+    for pos in state["positions"].values():
+        if pos is None:
+            continue
+        cur = pos.get("unrealized")
+        if cur is None:
+            cur = 0.0
+        unrealized += cur
     return state["session_start_equity"] + state["realized_pnl"] + unrealized
+
+
+def _mark_unrealized(pos, price):
+    """Store the position's mark-to-market at the given price."""
+    if not pos.get("entry_price"):
+        return
+    if pos["side"] == "long":
+        pos["unrealized"] = (price - pos["entry_price"]) * pos["qty"]
+    else:
+        pos["unrealized"] = (pos["entry_price"] - price) * pos["qty"]
+
+
+def _fetch_price(fetch_fn, cfg, symbol):
+    """Latest LTF close for one symbol, or None if the fetch fails."""
+    try:
+        df = fetch_fn(symbol, cfg.ltf_timeframe, cfg.ltf_candles)
+        return float(df["close"].iloc[-1])
+    except Exception:
+        return None
 
 
 def run_bot(cfg, executor, fetch_fn, state_path=None,
@@ -24,6 +45,26 @@ def run_bot(cfg, executor, fetch_fn, state_path=None,
     state = load_state(state_path) or init_state(cfg.symbols, cfg.initial_capital)
     if state.get("started_at") is None:
         state["started_at"] = datetime.now(timezone.utc).isoformat()
+
+    # --- new UTC day: begin a fresh session, preserving positions ---
+    try:
+        started = datetime.fromisoformat(state["started_at"])
+    except (TypeError, ValueError):
+        started = None
+    if started is not None:
+        if started.tzinfo is None:
+            started = started.replace(tzinfo=timezone.utc)
+        if started.date() != datetime.now(timezone.utc).date():
+            price = _fetch_price(fetch_fn, cfg, cfg.symbols[0])
+            if price is not None:
+                pos = state["positions"].get(cfg.symbols[0])
+                if pos is not None:
+                    _mark_unrealized(pos, price)
+                state["session_start_equity"] = _equity_estimate(state)
+            state["realized_pnl"] = 0.0
+            state["daily_loss_stopped"] = False
+            state["started_at"] = datetime.now(timezone.utc).isoformat()
+            logger("New session day detected; reset daily loss stop")
 
     iteration = 0
     try:
@@ -49,10 +90,12 @@ def _tick(cfg, executor, fetch_fn, state, symbol, logger):
     price = float(df_ltf["close"].iloc[-1])
 
     pos = state["positions"][symbol]
+    if pos is not None:
+        _mark_unrealized(pos, price)
     side = pos["side"] if pos else "flat"
 
     # --- daily loss kill switch ---
-    equity = _equity_estimate(state, price)
+    equity = _equity_estimate(state)
     daily = check_daily_loss(state["session_start_equity"], equity,
                              cfg.max_daily_loss_pct)
     if not daily.allowed:
