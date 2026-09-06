@@ -100,10 +100,16 @@ def run_backtest(df_htf, df_ltf, threshold, trailing, atr_mult, min_atr_pct,
 
 
 def run_backtest_meanrev(df_htf, df_ltf, oversold, overbought, htf_filter,
-                         trailing, atr_mult, fee_rate=FEE_RATE, initial=INITIAL):
+                         trailing, atr_mult, funding_series=None,
+                         funding_threshold=None, fee_rate=FEE_RATE, initial=INITIAL):
     from bot.meanreversion import latest_rsi
+    from bot.funding import funding_bias
+    import pandas as pd
     from feature_engine.indicators import compute_all_indicators
     from bot.risk import check_trailing_stop
+
+    use_funding = (funding_threshold is not None and funding_series is not None
+                   and len(funding_series) > 0)
 
     rsi = latest_rsi(df_ltf)
     atr = latest_atr_series(df_ltf)
@@ -115,6 +121,9 @@ def run_backtest_meanrev(df_htf, df_ltf, oversold, overbought, htf_filter,
     ltf["rsi_prev"] = ltf["rsi"].shift(1)
     ltf["atr"] = atr.reindex(ltf.index)
     ltf["htf_up"] = htf_up.reindex(ltf.index)
+    if use_funding and funding_series is not None and len(funding_series) > 0:
+        ltf["funding"] = funding_series.reindex(ltf.index, method="ffill")
+        ltf["funding"] = ltf["funding"].ffill()  # cover pre-first-funding bars
     ltf = ltf.dropna(subset=["rsi", "rsi_prev", "atr"])
     if len(ltf) == 0:
         return {"return_pct": 0.0, "trades": 0, "max_dd_pct": 0.0}
@@ -133,10 +142,19 @@ def run_backtest_meanrev(df_htf, df_ltf, oversold, overbought, htf_filter,
                 down_ok = not row["htf_up"]
             else:
                 up_ok = down_ok = True
-            if up_ok and row["rsi_prev"] > oversold and r <= oversold:
+            # funding NaN treated as neutral (allow entry); simplest, and
+            # funding history is expected to cover the window anyway.
+            if use_funding:
+                fund_val = row["funding"]
+                fund = funding_bias(fund_val, funding_threshold) if not pd.isna(fund_val) else "neutral"
+                long_fund_ok = fund in ("long", "neutral")
+                short_fund_ok = fund in ("short", "neutral")
+            else:
+                long_fund_ok = short_fund_ok = True
+            if up_ok and long_fund_ok and row["rsi_prev"] > oversold and r <= oversold:
                 position, entry_price, peak = "long", price, price
                 trades += 1
-            elif down_ok and row["rsi_prev"] < overbought and r >= overbought:
+            elif down_ok and short_fund_ok and row["rsi_prev"] < overbought and r >= overbought:
                 position, entry_price, peak = "short", price, price
                 trades += 1
         else:
@@ -163,32 +181,76 @@ def run_backtest_meanrev(df_htf, df_ltf, oversold, overbought, htf_filter,
             "max_dd_pct": max_dd * 100}
 
 
-def calibrate_meanrev():
+def calibrate_meanrev(use_funding=False):
     ex = get_binance_exchange()
     out = {}
     for symbol in SYMBOLS:
         df_htf = fetch_ohlcv_long(ex, symbol, HTF, HTF_LIMIT)
         df_ltf = fetch_ohlcv_long(ex, symbol, LTF, LTF_LIMIT)
         print(f"=== {symbol} === ({len(df_htf)}x1h, {len(df_ltf)}x15m)")
+
+        funding_series = None
+        if use_funding:
+            funding_series = fetch_funding_series(symbol)
+            if funding_series is not None and len(funding_series) > 0:
+                print(f"  funding: {len(funding_series)} periods "
+                      f"{funding_series.index[0]} -> {funding_series.index[-1]}")
+            else:
+                print("  funding: NO DATA (funding filter disabled)")
+
         best, n = None, 0
-        for oversold, overbought, htf_filter, trailing, mult in itertools.product(
-                [20, 25, 30], [70, 75, 80], [True, False], [False, True], [2.0, 3.0, 4.0]):
+        thresholds = [None, 0.0001, 0.0005, 0.001] if use_funding else [None]
+        for oversold, overbought, htf_filter, trailing, mult, fund_th in itertools.product(
+                [20, 25, 30], [70, 75, 80], [True, False], [False, True], [2.0, 3.0, 4.0],
+                thresholds):
             if oversold >= overbought:
                 continue
+            if fund_th is not None and (funding_series is None or len(funding_series) == 0):
+                continue
             r = run_backtest_meanrev(df_htf, df_ltf, oversold, overbought,
-                                     htf_filter, trailing, mult)
+                                     htf_filter, trailing, mult,
+                                     funding_series=funding_series if fund_th is not None else None,
+                                     funding_threshold=fund_th)
             n += 1
             if best is None or r["return_pct"] > best[1]["return_pct"]:
-                best = ((oversold, overbought, htf_filter, trailing, mult), r)
+                best = ((oversold, overbought, htf_filter, trailing, mult, fund_th), r)
         print(f"  ({n} combos) BEST over={best[0][0]} overb={best[0][1]} "
-              f"htf={best[0][2]} trailing={best[0][3]} mult={best[0][4]} -> "
+              f"htf={best[0][2]} trailing={best[0][3]} mult={best[0][4]} "
+              f"fund_th={best[0][5]} -> "
               f"ret {best[1]['return_pct']:+.1f}% trades={best[1]['trades']} "
               f"maxDD {best[1]['max_dd_pct']:.1f}%")
         out[symbol] = {"params": best[0], **best[1]}
-    with open(Path(__file__).parent / "calibration_results_meanrev.json", "w") as f:
+    filename = "calibration_results_funding.json" if use_funding else "calibration_results_meanrev.json"
+    with open(Path(__file__).parent / filename, "w") as f:
         json.dump(out, f, indent=2)
-    print("Saved bot/calibration_results_meanrev.json")
+    print(f"Saved bot/{filename}")
     return out
+
+
+def fetch_funding_series(symbol):
+    """Fetch funding history; try Binance then fall back to OKX."""
+    import ccxt
+    from bot.funding import funding_series_from_rows, get_funding_exchange
+    try:
+        fxs = get_funding_exchange()
+        rows = fxs.fetch_funding_rate_history(symbol)
+        if len(rows) >= 200:
+            s = funding_series_from_rows(rows)
+            if len(s) > 0:
+                print(f"  funding source=binance ({len(s)} periods)")
+                return s
+    except Exception as e:
+        print(f"  funding binance failed ({type(e).__name__}): {e}")
+    try:
+        okx = ccxt.okx({"enableRateLimit": True})
+        rows = okx.fetch_funding_rate_history(symbol)
+        s = funding_series_from_rows(rows)
+        if len(s) > 0:
+            print(f"  funding source=okx ({len(s)} periods)")
+            return s
+    except Exception as e:
+        print(f"  funding okx failed ({type(e).__name__}): {e}")
+    return None
 
 
 def calibrate():
@@ -224,8 +286,10 @@ def calibrate():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--signal", choices=["momentum", "meanreversion"], default="momentum")
+    parser.add_argument("--funding", action="store_true",
+                        help="meanreversion: enable funding-rate filter grid")
     args = parser.parse_args()
     if args.signal == "meanreversion":
-        calibrate_meanrev()
+        calibrate_meanrev(use_funding=args.funding)
     else:
         calibrate()
