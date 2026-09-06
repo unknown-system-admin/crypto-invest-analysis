@@ -40,16 +40,57 @@ def test_evaluate_enter_short_in_bear():
     assert sig.action in ("enter_short", "none")
 
 
-def test_evaluate_exit_long_when_direction_flips():
-    # side="long" but HTF turns bearish -> exit_long
-    df_htf = _ohlcv(300, trend=-0.0005)
-    df_ltf = _ohlcv(300, trend=0.0005)
-    sig = evaluate(df_htf, df_ltf, 0.10, side="long")
-    assert sig.action == "exit_long"
+def test_evaluate_enter_long_fires_on_up_cross(monkeypatch):
+    import bot.signals as sigs
+    calls = {"n": 0}
+
+    def fake_momentum(df):
+        calls["n"] += 1
+        if calls["n"] == 1:  # HTF call -> bullish
+            return pd.Series([0.5], index=[0])
+        return pd.Series([0.0, -0.1, 0.1], index=[0, 1, 2])  # LTF scores
+
+    monkeypatch.setattr(sigs, "momentum_series", fake_momentum)
+    sig = sigs.evaluate(None, None, 0.10, side="flat")
+    assert sig.action == "enter_long"
 
 
-def test_evaluate_none_in_neutral_market():
-    df_htf = _ohlcv(300, trend=0.0)
-    df_ltf = _ohlcv(300, trend=0.0)
-    sig = evaluate(df_htf, df_ltf, 0.10, side="flat")
+def test_evaluate_enter_short_fires_on_down_cross(monkeypatch):
+    import bot.signals as sigs
+    calls = {"n": 0}
+
+    def fake_momentum(df):
+        calls["n"] += 1
+        if calls["n"] == 1:  # HTF -> bearish
+            return pd.Series([-0.5], index=[0])
+        return pd.Series([0.0, 0.1, -0.1], index=[0, 1, 2])  # LTF: prev delta +0.1, curr -0.1
+
+    monkeypatch.setattr(sigs, "momentum_series", fake_momentum)
+    sig = sigs.evaluate(None, None, 0.10, side="flat")
+    assert sig.action == "enter_short"
+
+
+def test_evaluate_none_when_neutral_momentum(monkeypatch):
+    import bot.signals as sigs
+
+    def fake_momentum(df):
+        return pd.Series([0.0, 0.0, 0.0], index=[0, 1, 2])  # zero deltas
+
+    monkeypatch.setattr(sigs, "momentum_series", fake_momentum)
+    sig = sigs.evaluate(None, None, 0.10, side="flat")
     assert sig.action == "none"
+
+
+def test_evaluate_exit_long_when_direction_flips(monkeypatch):
+    import bot.signals as sigs
+    calls = {"n": 0}
+
+    def fake_momentum(df):
+        calls["n"] += 1
+        if calls["n"] == 1:  # HTF now bearish while holding long
+            return pd.Series([-0.5], index=[0])
+        return pd.Series([0.1, 0.1, 0.1], index=[0, 1, 2])
+
+    monkeypatch.setattr(sigs, "momentum_series", fake_momentum)
+    sig = sigs.evaluate(None, None, 0.10, side="long")
+    assert sig.action == "exit_long"
