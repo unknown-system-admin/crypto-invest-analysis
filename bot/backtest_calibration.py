@@ -13,7 +13,7 @@ from data_cache import load_or_fetch
 
 SYMBOLS = ["BTC/USDT:USDT", "SOL/USDT:USDT"]
 HTF = "1h"
-LTF = "5m"
+LTF = "15m"
 FEE_RATE = 0.001  # per side
 STOP_LOSS_PCT = 0.025
 INITIAL = 10000.0
@@ -81,7 +81,7 @@ def calibrate():
     for symbol in SYMBOLS:
         print(f"=== {symbol} ===")
         df_htf = load_or_fetch(symbol, HTF, limit=800)
-        df_ltf = load_or_fetch(symbol, LTF, limit=4000)
+        df_ltf = load_or_fetch(symbol, LTF, limit=1440)
         print(f"  1h: {len(df_htf)} bars {df_htf.index[0]} -> {df_htf.index[-1]}")
         print(f"  5m: {len(df_ltf)} bars {df_ltf.index[0]} -> {df_ltf.index[-1]}")
 
