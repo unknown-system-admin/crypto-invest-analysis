@@ -36,3 +36,22 @@ def check_position_limit(open_positions: list, symbol: str,
     if count >= max_per_symbol:
         return RiskDecision(False, f"{symbol} already has {count} position(s)")
     return RiskDecision(True)
+
+
+def trailing_stop_price(entry_price: float, peak_price: float, atr: float,
+                        side: str, k: float, hard_stop_pct: float) -> float:
+    if side == "long":
+        atr_stop = peak_price - k * atr
+        hard_stop = entry_price * (1 - hard_stop_pct)
+        return max(atr_stop, hard_stop)
+    atr_stop = peak_price + k * atr
+    hard_stop = entry_price * (1 + hard_stop_pct)
+    return min(atr_stop, hard_stop)
+
+
+def check_trailing_stop(entry_price: float, peak_price: float, current_price: float,
+                        atr: float, side: str, k: float, hard_stop_pct: float) -> bool:
+    stop = trailing_stop_price(entry_price, peak_price, atr, side, k, hard_stop_pct)
+    if side == "long":
+        return current_price <= stop
+    return current_price >= stop

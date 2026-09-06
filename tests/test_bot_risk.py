@@ -1,5 +1,6 @@
 from bot.risk import (RiskDecision, check_daily_loss, check_stop_loss,
-                      check_position_limit, position_notional)
+                      check_position_limit, position_notional,
+                      trailing_stop_price, check_trailing_stop)
 
 
 def test_daily_loss_allows_within_limit():
@@ -32,3 +33,23 @@ def test_position_limit_per_symbol():
     assert d.allowed is False
     d2 = check_position_limit(["SOL/USDT:USDT"], "BTC/USDT:USDT", max_per_symbol=1)
     assert d2.allowed is True
+
+
+def test_trailing_stop_price_long_uses_peak():
+    stop = trailing_stop_price(100.0, 110.0, 2.0, "long", 2.5, 0.025)
+    assert stop == 105.0  # max(110-5=105, 97.5)
+
+
+def test_trailing_stop_price_long_floor_hard_stop():
+    stop = trailing_stop_price(100.0, 100.0, 2.0, "long", 2.5, 0.025)
+    assert stop == 97.5
+
+
+def test_trailing_stop_price_short_uses_peak():
+    stop = trailing_stop_price(100.0, 90.0, 2.0, "short", 2.5, 0.025)
+    assert stop == 95.0  # min(90+5=95, 102.5)
+
+
+def test_check_trailing_stop_long_fires_below_stop():
+    assert check_trailing_stop(100.0, 110.0, 104.5, 2.0, "long", 2.5, 0.025) is True
+    assert check_trailing_stop(100.0, 110.0, 105.5, 2.0, "long", 2.5, 0.025) is False
