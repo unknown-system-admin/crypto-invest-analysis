@@ -10,6 +10,8 @@ class BotConfig:
     ltf_candles: int = 1440
     leverage: int = 5
     margin_pct: float = 0.20
+    # v2 grid (2026-09-06, Binance 15m/1h, ATR stop + vol filter): best thr=0.30 but no intraday edge
+    # (BTC -0.4% / SOL +6.5%, trades 17-26 <100, vol filter OFF) — keep v1 default; see calibration_results_v2.json
     htf_threshold: float = 0.25  # calibrated (preliminary): BTC=0.25 SOL=0.30; see calibration_results.json
     stop_loss_pct: float = 0.025
     atr_stop_mult: float = 2.5
