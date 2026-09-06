@@ -28,17 +28,21 @@ class OKXExecutor:
 
     def _amount_from_notional(self, symbol: str, notional: float) -> float:
         price = self.exchange.fetch_ticker(symbol)["last"]
-        if price <= 0:
+        if not price or price <= 0:
             raise ValueError(f"invalid ticker price for {symbol}")
-        return notional / price
+        market = self.exchange.market(symbol)
+        contract_size = float(market.get("contractSize") or 1.0)
+        return notional / price / contract_size
 
     def open_long(self, symbol: str, notional: float):
         amount = self._amount_from_notional(symbol, notional)
-        return self.exchange.create_market_buy_order(symbol, amount)
+        return self.exchange.create_market_buy_order(
+            symbol, amount, params={"tdMode": "isolated"})
 
     def open_short(self, symbol: str, notional: float):
         amount = self._amount_from_notional(symbol, notional)
-        return self.exchange.create_market_sell_order(symbol, amount)
+        return self.exchange.create_market_sell_order(
+            symbol, amount, params={"tdMode": "isolated"})
 
     def close_position(self, symbol: str, side: str):
         positions = self.exchange.fetch_positions()
@@ -50,9 +54,9 @@ class OKXExecutor:
         amount = abs(float(pos["contracts"]))
         if side == "long":
             return self.exchange.create_market_sell_order(
-                symbol, amount, params={"reduceOnly": True})
+                symbol, amount, params={"reduceOnly": True, "tdMode": "isolated"})
         return self.exchange.create_market_buy_order(
-            symbol, amount, params={"reduceOnly": True})
+            symbol, amount, params={"reduceOnly": True, "tdMode": "isolated"})
 
 
 def _require_env(name: str) -> str:

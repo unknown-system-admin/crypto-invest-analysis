@@ -182,5 +182,6 @@ python -m bot.run_bot --live
 
 風險控制：單日 -10% 強制停、單筆 -2.5% 停損、每資產 1 倉、崩潰重啟對帳。
 ⚠️ 尚未實作：`--live` 開機對帳（載入 state 後需呼叫 executor.get_open_symbols() 校正實際倉位）。上 `--live` 前必須先實作。
+⚠️ 尚未實作：下單冪等性（spec 要求；若 `open_long` 拋錯但交易所已接受，state 未更新會重複進場）。上 `--live` 前必須一併實作。
 ⚠️ M1 校準（2026-09-06，15m/14 天）顯示混合訊號目前無明顯正向 edge（BTC -0.7% / SOL +0.4%），門檻值僅為初步，上真錢前需重新驗證。
 詳細設計見 `docs/superpowers/specs/2026-09-06-hft-bot-design.md`。

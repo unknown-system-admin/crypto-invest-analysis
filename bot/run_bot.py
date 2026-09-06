@@ -40,8 +40,12 @@ def main():
     if args.live:
         executor = OKXExecutor()
         print("LIVE mode: placing orders on OKX demo (sandbox).")
+
+        def fetch_fn(symbol, timeframe, limit):
+            return load_or_fetch(symbol, timeframe, limit, force_refresh=True)
     else:
         print("DRY-RUN mode: signals only, no orders.")
+        fetch_fn = load_or_fetch
 
     print(f"Symbols: {cfg.symbols}")
     print(f"HTF {cfg.htf_timeframe} (threshold {cfg.htf_threshold}) -> LTF {cfg.ltf_timeframe}")
@@ -49,7 +53,7 @@ def main():
           f"stop {cfg.stop_loss_pct:.1%}, daily stop {cfg.max_daily_loss_pct:.0%}")
     print("Press Ctrl+C to stop (positions preserved).")
 
-    run_bot(cfg, executor, load_or_fetch)
+    run_bot(cfg, executor, fetch_fn)
 
 
 if __name__ == "__main__":
