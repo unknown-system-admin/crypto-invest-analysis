@@ -1,0 +1,24 @@
+{
+  "BTC/USDT:USDT": {
+    "params": [
+      0.3,
+      true,
+      2.0,
+      0.0
+    ],
+    "return_pct": -0.39317693562490597,
+    "trades": 26,
+    "max_dd_pct": 3.0331218189627
+  },
+  "SOL/USDT:USDT": {
+    "params": [
+      0.3,
+      true,
+      2.0,
+      0.0
+    ],
+    "return_pct": 6.4880742849355855,
+    "trades": 17,
+    "max_dd_pct": 2.5088787915978887
+  }
+}
