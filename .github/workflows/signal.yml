@@ -1,0 +1,17 @@
+name: crypto-signal
+
+# Triggers the strategy signal endpoint daily. Notification is sent to
+# Discord only when a NEW entry/exit signal fires (deduplicated by the bot).
+on:
+  schedule:
+    # Taiwan time 08:00 = 00:00 UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  check-signal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger signal endpoint
+        run: |
+          curl -sS -m 120 "https://crypto-invest-analysis.onrender.com/signal" || echo "signal endpoint unreachable"

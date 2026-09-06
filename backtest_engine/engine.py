@@ -100,7 +100,7 @@ class BacktestEngine:
                         # Return margin + PnL
                         margin_returned = pos.entry_price * pos.quantity
                         cash += margin_returned + pnl
-                    trades.append({"action": "sell", "price": effective_price, "reason": "drawdown_stop", "pnl": pnl})
+                    trades.append({"action": "sell", "price": effective_price, "reason": "drawdown_stop", "pnl": pnl, "date": idx.strftime("%Y-%m-%d"), "score": row.get("momentum_score", 0)})
                 positions.clear()
 
             # Execute trades
@@ -118,7 +118,7 @@ class BacktestEngine:
                         effective_price = price * (1 - self.slippage)
                         pnl = (effective_price * (1 - self.fee_rate) - pos.entry_price * (1 + self.fee_rate)) * pos.quantity
                         cash += pos.quantity * effective_price * (1 - self.fee_rate)
-                        trades.append({"action": "sell", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
+                        trades.append({"action": "sell", "price": effective_price, "quantity": pos.quantity, "pnl": pnl, "date": idx.strftime("%Y-%m-%d"), "score": row.get("momentum_score", 0)})
                         positions.clear()
                         daily_trade_count += 1
                         bars_held = 0
@@ -129,7 +129,7 @@ class BacktestEngine:
                         pnl = (pos.entry_price * (1 - self.fee_rate) - effective_price * (1 + self.fee_rate)) * pos.quantity
                         margin_returned = pos.entry_price * pos.quantity
                         cash += margin_returned + pnl
-                        trades.append({"action": "cover", "price": effective_price, "quantity": pos.quantity, "pnl": pnl})
+                        trades.append({"action": "cover", "price": effective_price, "quantity": pos.quantity, "pnl": pnl, "date": idx.strftime("%Y-%m-%d"), "score": row.get("momentum_score", 0)})
                         positions.clear()
                         daily_trade_count += 1
                         bars_held = 0
@@ -161,7 +161,7 @@ class BacktestEngine:
                             if cost <= cash:
                                 cash -= cost
                                 positions.append(Position(self.symbol, "long", qty, effective_price, current_price=effective_price))
-                                trades.append({"action": "buy", "price": effective_price, "quantity": qty})
+                                trades.append({"action": "buy", "price": effective_price, "quantity": qty, "date": idx.strftime("%Y-%m-%d"), "score": row.get("momentum_score", 0)})
                                 daily_trade_count += 1
                                 bars_held = 0
                     elif cooldown_ok and sig.direction == "偏空" and trend_down:
@@ -171,7 +171,7 @@ class BacktestEngine:
                         if qty > 0 and margin_required <= cash and margin_required > 0:
                             cash -= margin_required
                             positions.append(Position(self.symbol, "short", qty, effective_price, current_price=effective_price))
-                            trades.append({"action": "short_sell", "price": effective_price, "quantity": qty})
+                            trades.append({"action": "short_sell", "price": effective_price, "quantity": qty, "date": idx.strftime("%Y-%m-%d"), "score": row.get("momentum_score", 0)})
                             daily_trade_count += 1
                             bars_held = 0
                     if bars_since_exit is not None:

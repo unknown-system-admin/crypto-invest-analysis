@@ -1,4 +1,6 @@
 *.venv
 .superpowers/
 .worktrees/
-
+monitor/signal_state.json
+monitor/record.json
+.DS_Store

@@ -39,3 +39,17 @@ trading:
 reports:
   default_tf: "1d"
   default_step: 1
+
+signal:
+  enabled: true
+  timeframe: "1d"
+  candles: 300
+  # Validated config — do not re-tune (see README)
+  buy: 0.05
+  sell: -0.30
+  cooldown: 3
+  trend_filter: true
+  strong_filter: false
+  min_holding: 0
+  dd_stop: 50
+  pos: 95

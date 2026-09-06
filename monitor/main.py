@@ -266,6 +266,35 @@ def health():
     return {"status": "alive"}
 
 
+@app.get("/signal")
+def signal():
+    """Evaluate validated strategy on latest daily data; notify Discord on NEW signals."""
+    scfg = CONFIG.get("signal", {})
+    if not scfg.get("enabled", True):
+        return {"status": "disabled"}
+    tf = scfg.get("timeframe", "1d")
+    limit = scfg.get("candles", 300)
+
+    from monitor.signal_bot import evaluate_symbol, now_str, DEFAULT_CFG
+    from data_cache import load_or_fetch
+    from feature_engine.builder import build_feature_matrix
+
+    cfg = {k: scfg.get(k, v) for k, v in DEFAULT_CFG.items()}
+    results = []
+    for symbol in CONFIG["symbols"]:
+        try:
+            df = load_or_fetch(symbol, tf, limit=limit)
+            features, _ = build_feature_matrix(df, n_bars=5)
+            res = evaluate_symbol(symbol, features, send_bot_message, cfg=cfg)
+            results.append(res)
+        except Exception as e:
+            results.append({"symbol": symbol, "error": str(e)})
+
+    notified = [r["symbol"] for r in results if r.get("notified")]
+    return {"status": "ok", "results": results, "notified": notified,
+            "time": now_str()}
+
+
 @app.get("/debug/webhook")
 def debug_webhook():
     webhook = CONFIG["discord"]["webhook_url"]
