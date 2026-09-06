@@ -12,6 +12,8 @@ class BotConfig:
     margin_pct: float = 0.20
     htf_threshold: float = 0.25  # calibrated (preliminary): BTC=0.25 SOL=0.30; see calibration_results.json
     stop_loss_pct: float = 0.025
+    atr_stop_mult: float = 2.5
+    min_atr_pct: float = 0.0015
     max_daily_loss_pct: float = 0.10
     poll_seconds: int = 20
     dry_run: bool = True

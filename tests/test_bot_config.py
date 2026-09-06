@@ -24,3 +24,9 @@ def test_config_overridable():
     cfg = BotConfig(leverage=3, stop_loss_pct=0.02)
     assert cfg.leverage == 3
     assert cfg.stop_loss_pct == 0.02
+
+
+def test_signal_v2_defaults():
+    cfg = BotConfig()
+    assert cfg.atr_stop_mult == 2.5
+    assert cfg.min_atr_pct == 0.0015
