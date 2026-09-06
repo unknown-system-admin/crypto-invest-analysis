@@ -1,0 +1,14 @@
+{
+  "BTC/USDT:USDT": {
+    "best_threshold": 0.3,
+    "return_pct": -1.7161330847646594,
+    "trades": 6,
+    "max_dd_pct": 1.7161330847646605
+  },
+  "SOL/USDT:USDT": {
+    "best_threshold": 0.3,
+    "return_pct": 0.0,
+    "trades": 0,
+    "max_dd_pct": 0.0
+  }
+}
