@@ -111,11 +111,11 @@ def test_new_day_resets_daily_loss_stop(tmp_path):
     assert any("New session day detected" in line for line in logs)
 
 
-def test_new_day_reset_clears_position_unrealized(tmp_path):
-    """New-day reset re-baselines session_start_equity to include an open
-    position's unrealized mark, so that stored mark must be cleared afterwards
-    or it gets double-counted in every later equity estimate (which feeds
-    position sizing)."""
+def test_new_day_reset_baselines_to_cash_equity(tmp_path):
+    """New-day reset re-baselines session_start_equity to cash equity (start +
+    realized only, excluding unrealized), preserving each open position's
+    absolute unrealized mark so equity estimates stay drift-free: start +
+    realized + sum(abs marks) = true equity on every tick."""
     logs = []
     cfg = BotConfig(dry_run=True, poll_seconds=0, symbols=["BTC/USDT:USDT"])
     state_path = tmp_path / "state.json"
@@ -127,19 +127,19 @@ def test_new_day_reset_clears_position_unrealized(tmp_path):
                                              "unrealized": 50.0}}}
     state_path.write_text(json.dumps(state))
 
-    price = 41000.0
-    fetcher = FakeFetcher(htf=_flat(cfg.htf_candles, price),
-                          ltf=_flat(cfg.ltf_candles, price))
+    fetcher = FakeFetcher(htf=_flat(cfg.htf_candles, 41000.0),
+                          ltf=_flat(cfg.ltf_candles, 41000.0))
     run_bot(cfg, executor=None, fetch_fn=fetcher, state_path=state_path,
             max_iterations=0, logger=logs.append)
 
     new_state = __import__("bot.state", fromlist=["load_state"]).load_state(state_path)
+    assert new_state["session_start_equity"] == 10000.0 - 500.0
     assert new_state["realized_pnl"] == 0.0
-    assert new_state["session_start_equity"] == 10000.0 - 500.0 + (price - 40000.0) * 0.05
+    assert new_state["daily_loss_stopped"] is False
     pos = new_state["positions"]["BTC/USDT:USDT"]
     assert pos is not None
-    assert pos["unrealized"] == 0.0
-    assert _equity_estimate(new_state) == new_state["session_start_equity"]
+    assert pos["unrealized"] == 50.0
+    assert _equity_estimate(new_state) == 10000.0 - 500.0 + 50.0
 
 
 def test_equity_sums_across_positions():
