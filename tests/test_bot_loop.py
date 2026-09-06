@@ -14,6 +14,13 @@ def _ohlcv(n, trend):
                          "low": close * 0.998, "close": close, "volume": 100.0}, index=idx)
 
 
+def _flat(n, base):
+    idx = pd.date_range("2026-01-01", periods=n, freq="5min")
+    close = np.ones(n) * base
+    return pd.DataFrame({"open": close * 0.999, "high": close * 1.002,
+                         "low": close * 0.998, "close": close, "volume": 100.0}, index=idx)
+
+
 def _v_ohlcv(n, dip=0.01, up=0.01):
     """Flat series ending in a dip then recovery, forcing an up-cross on the
     last LTF delta so enter_long fires deterministically (constant-trend
@@ -102,6 +109,37 @@ def test_new_day_resets_daily_loss_stop(tmp_path):
     started = datetime.fromisoformat(new_state["started_at"])
     assert started.date() == datetime.now(timezone.utc).date()
     assert any("New session day detected" in line for line in logs)
+
+
+def test_new_day_reset_clears_position_unrealized(tmp_path):
+    """New-day reset re-baselines session_start_equity to include an open
+    position's unrealized mark, so that stored mark must be cleared afterwards
+    or it gets double-counted in every later equity estimate (which feeds
+    position sizing)."""
+    logs = []
+    cfg = BotConfig(dry_run=True, poll_seconds=0, symbols=["BTC/USDT:USDT"])
+    state_path = tmp_path / "state.json"
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    state = {"session_start_equity": 10000.0, "started_at": yesterday,
+             "daily_loss_stopped": True, "realized_pnl": -500.0,
+             "positions": {"BTC/USDT:USDT": {"side": "long", "entry_price": 40000.0,
+                                             "qty": 0.05, "entry_time": "2026-09-05T10:00:00",
+                                             "unrealized": 50.0}}}
+    state_path.write_text(json.dumps(state))
+
+    price = 41000.0
+    fetcher = FakeFetcher(htf=_flat(cfg.htf_candles, price),
+                          ltf=_flat(cfg.ltf_candles, price))
+    run_bot(cfg, executor=None, fetch_fn=fetcher, state_path=state_path,
+            max_iterations=0, logger=logs.append)
+
+    new_state = __import__("bot.state", fromlist=["load_state"]).load_state(state_path)
+    assert new_state["realized_pnl"] == 0.0
+    assert new_state["session_start_equity"] == 10000.0 - 500.0 + (price - 40000.0) * 0.05
+    pos = new_state["positions"]["BTC/USDT:USDT"]
+    assert pos is not None
+    assert pos["unrealized"] == 0.0
+    assert _equity_estimate(new_state) == new_state["session_start_equity"]
 
 
 def test_equity_sums_across_positions():

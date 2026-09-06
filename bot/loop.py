@@ -64,6 +64,9 @@ def run_bot(cfg, executor, fetch_fn, state_path=None,
             state["realized_pnl"] = 0.0
             state["daily_loss_stopped"] = False
             state["started_at"] = datetime.now(timezone.utc).isoformat()
+            for pos in state["positions"].values():
+                if pos is not None:
+                    pos["unrealized"] = 0.0
             logger("New session day detected; reset daily loss stop")
 
     iteration = 0
