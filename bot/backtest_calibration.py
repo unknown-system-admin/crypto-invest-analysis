@@ -3,6 +3,7 @@
 Grid: htf_threshold x stop mode (hard/trailing) x atr_stop_mult x min_atr_pct.
 Requires network (Binance public API). Saves bot/calibration_results_v2.json.
 """
+import argparse
 import itertools
 import json
 import sys
@@ -98,6 +99,98 @@ def run_backtest(df_htf, df_ltf, threshold, trailing, atr_mult, min_atr_pct,
             "max_dd_pct": max_dd * 100}
 
 
+def run_backtest_meanrev(df_htf, df_ltf, oversold, overbought, htf_filter,
+                         trailing, atr_mult, fee_rate=FEE_RATE, initial=INITIAL):
+    from bot.meanreversion import latest_rsi
+    from feature_engine.indicators import compute_all_indicators
+    from bot.risk import check_trailing_stop
+
+    rsi = latest_rsi(df_ltf)
+    atr = latest_atr_series(df_ltf)
+    ind_htf = compute_all_indicators(df_htf)
+    htf_up = (df_htf["close"] > ind_htf["SMA_50"]).reindex(df_ltf.index, method="ffill")
+
+    ltf = df_ltf.copy()
+    ltf["rsi"] = rsi.reindex(ltf.index)
+    ltf["rsi_prev"] = ltf["rsi"].shift(1)
+    ltf["atr"] = atr.reindex(ltf.index)
+    ltf["htf_up"] = htf_up.reindex(ltf.index)
+    ltf = ltf.dropna(subset=["rsi", "rsi_prev", "atr"])
+    if len(ltf) == 0:
+        return {"return_pct": 0.0, "trades": 0, "max_dd_pct": 0.0}
+
+    equity = initial
+    position = entry_price = peak = None
+    trades = 0
+    curve_peak = initial
+    max_dd = 0.0
+
+    for _, row in ltf.iterrows():
+        price, r = row["close"], row["rsi"]
+        if position is None:
+            if htf_filter:
+                up_ok = row["htf_up"]
+                down_ok = not row["htf_up"]
+            else:
+                up_ok = down_ok = True
+            if up_ok and row["rsi_prev"] > oversold and r <= oversold:
+                position, entry_price, peak = "long", price, price
+                trades += 1
+            elif down_ok and row["rsi_prev"] < overbought and r >= overbought:
+                position, entry_price, peak = "short", price, price
+                trades += 1
+        else:
+            if position == "long":
+                peak = max(peak, price)
+                stop_hit = check_trailing_stop(entry_price, peak, price, row["atr"],
+                                               "long", atr_mult if trailing else 0.0,
+                                               HARD_STOP_PCT)
+                exit_now = stop_hit or r >= 55.0
+            else:
+                peak = min(peak, price)
+                stop_hit = check_trailing_stop(entry_price, peak, price, row["atr"],
+                                               "short", atr_mult if trailing else 0.0,
+                                               HARD_STOP_PCT)
+                exit_now = stop_hit or r <= 45.0
+            if exit_now:
+                ret = (price / entry_price - 1) * (1 if position == "long" else -1)
+                equity *= 1 + ret - 2 * fee_rate
+                position = entry_price = peak = None
+        curve_peak = max(curve_peak, equity)
+        max_dd = max(max_dd, (curve_peak - equity) / curve_peak)
+
+    return {"return_pct": (equity / initial - 1) * 100, "trades": trades,
+            "max_dd_pct": max_dd * 100}
+
+
+def calibrate_meanrev():
+    ex = get_binance_exchange()
+    out = {}
+    for symbol in SYMBOLS:
+        df_htf = fetch_ohlcv_long(ex, symbol, HTF, HTF_LIMIT)
+        df_ltf = fetch_ohlcv_long(ex, symbol, LTF, LTF_LIMIT)
+        print(f"=== {symbol} === ({len(df_htf)}x1h, {len(df_ltf)}x15m)")
+        best, n = None, 0
+        for oversold, overbought, htf_filter, trailing, mult in itertools.product(
+                [20, 25, 30], [70, 75, 80], [True, False], [False, True], [2.0, 3.0, 4.0]):
+            if oversold >= overbought:
+                continue
+            r = run_backtest_meanrev(df_htf, df_ltf, oversold, overbought,
+                                     htf_filter, trailing, mult)
+            n += 1
+            if best is None or r["return_pct"] > best[1]["return_pct"]:
+                best = ((oversold, overbought, htf_filter, trailing, mult), r)
+        print(f"  ({n} combos) BEST over={best[0][0]} overb={best[0][1]} "
+              f"htf={best[0][2]} trailing={best[0][3]} mult={best[0][4]} -> "
+              f"ret {best[1]['return_pct']:+.1f}% trades={best[1]['trades']} "
+              f"maxDD {best[1]['max_dd_pct']:.1f}%")
+        out[symbol] = {"params": best[0], **best[1]}
+    with open(Path(__file__).parent / "calibration_results_meanrev.json", "w") as f:
+        json.dump(out, f, indent=2)
+    print("Saved bot/calibration_results_meanrev.json")
+    return out
+
+
 def calibrate():
     ex = get_binance_exchange()
     out = {}
@@ -129,4 +222,10 @@ def calibrate():
 
 
 if __name__ == "__main__":
-    calibrate()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--signal", choices=["momentum", "meanreversion"], default="momentum")
+    args = parser.parse_args()
+    if args.signal == "meanreversion":
+        calibrate_meanrev()
+    else:
+        calibrate()
