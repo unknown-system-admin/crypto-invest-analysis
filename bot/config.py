@@ -19,6 +19,7 @@ class BotConfig:
     signal_mode: str = "momentum"  # "momentum" | "meanreversion"
     rsi_oversold: int = 25
     rsi_overbought: int = 75
+    funding_threshold: float = 0.0  # contrarian funding gate; 0.0 = disabled (calibration found no trigger)
     max_daily_loss_pct: float = 0.10
     poll_seconds: int = 20
     dry_run: bool = True

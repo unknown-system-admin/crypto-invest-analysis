@@ -37,3 +37,8 @@ def test_meanreversion_config_defaults():
     assert cfg.signal_mode == "momentum"   # default stays momentum
     assert cfg.rsi_oversold == 25
     assert cfg.rsi_overbought == 75
+
+
+def test_funding_gate_default_disabled():
+    cfg = BotConfig()
+    assert cfg.funding_threshold == 0.0   # 0.0 = disabled (calibration: funding never crossed contrarian threshold)
