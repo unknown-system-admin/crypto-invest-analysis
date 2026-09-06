@@ -142,6 +142,25 @@ def test_new_day_reset_baselines_to_cash_equity(tmp_path):
     assert _equity_estimate(new_state) == 10000.0 - 500.0 + 50.0
 
 
+def test_run_bot_default_state_path(tmp_path, monkeypatch):
+    """CLI calls run_bot without a state_path; it must fall back to the default
+    bot/state.json location rather than crashing on None."""
+    import bot.loop as loop_mod
+
+    default = tmp_path / "state.json"
+    monkeypatch.setattr(loop_mod, "STATE_PATH", default)
+    logs = []
+    cfg = BotConfig(dry_run=True, poll_seconds=0, symbols=["BTC/USDT:USDT"])
+    fetcher = FakeFetcher(htf=_flat(cfg.htf_candles, 40000.0),
+                          ltf=_flat(cfg.ltf_candles, 40000.0))
+    run_bot(cfg, executor=None, fetch_fn=fetcher, max_iterations=1, logger=logs.append)
+
+    assert default.exists()
+    state = __import__("bot.state", fromlist=["load_state"]).load_state(default)
+    assert state["session_start_equity"] == 10000.0
+    assert state["positions"]["BTC/USDT:USDT"] is None
+
+
 def test_equity_sums_across_positions():
     """Portfolio equity = session start + realized + sum of each open
     position's stored unrealized; positions without a stored value count 0."""

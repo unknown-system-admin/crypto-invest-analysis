@@ -2,7 +2,7 @@ import time
 from datetime import datetime, timezone
 
 from bot.signals import evaluate
-from bot.state import init_state, load_state, save_state
+from bot.state import STATE_PATH, init_state, load_state, save_state
 from bot.risk import (check_daily_loss, check_stop_loss,
                       check_position_limit, position_notional)
 
@@ -33,6 +33,8 @@ def _mark_unrealized(pos, price):
 
 def run_bot(cfg, executor, fetch_fn, state_path=None,
             max_iterations=None, logger=print):
+    if state_path is None:
+        state_path = STATE_PATH
     state = load_state(state_path) or init_state(cfg.symbols, cfg.initial_capital)
     if state.get("started_at") is None:
         state["started_at"] = datetime.now(timezone.utc).isoformat()
