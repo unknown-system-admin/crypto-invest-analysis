@@ -5,7 +5,8 @@ def test_default_config_values():
     cfg = BotConfig()
     assert cfg.symbols == ["BTC/USDT:USDT", "SOL/USDT:USDT"]
     assert cfg.htf_timeframe == "1h"
-    assert cfg.ltf_timeframe == "5m"
+    assert cfg.ltf_timeframe == "15m"
+    assert cfg.ltf_candles == 1440
     assert cfg.leverage == 5
     assert cfg.margin_pct == 0.20
     assert cfg.stop_loss_pct == 0.025

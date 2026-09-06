@@ -83,7 +83,7 @@ def calibrate():
         df_htf = load_or_fetch(symbol, HTF, limit=800)
         df_ltf = load_or_fetch(symbol, LTF, limit=1440)
         print(f"  1h: {len(df_htf)} bars {df_htf.index[0]} -> {df_htf.index[-1]}")
-        print(f"  5m: {len(df_ltf)} bars {df_ltf.index[0]} -> {df_ltf.index[-1]}")
+        print(f"  15m: {len(df_ltf)} bars {df_ltf.index[0]} -> {df_ltf.index[-1]}")
 
         best = None
         for threshold in [0.05, 0.10, 0.15, 0.20, 0.25, 0.30]:
