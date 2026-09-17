@@ -5,39 +5,42 @@ from feature_engine.momentum import momentum_score, momentum_delta, momentum_acc
 from feature_engine.labels import binary_label
 
 
-def build_feature_matrix(df: pd.DataFrame, n_bars: int = 5) -> tuple:
-    """Build complete feature matrix with labels.
-    
-    Args:
-        df: OHLCV DataFrame
-        n_bars: Number of bars to look ahead for labels
-        
-    Returns:
-        Tuple of (features DataFrame, labels Series)
-    """
-    # Compute indicators
+def _attach_momentum(df: pd.DataFrame) -> pd.DataFrame:
     indicators = compute_all_indicators(df)
-    
-    # Compute momentum (needs close column for normalization)
     indicators["close"] = df["close"]
     momentum = momentum_score(indicators)
-    delta = momentum_delta(momentum)
-    acceleration = momentum_acceleration(delta)
-    
-    # Add momentum features
     indicators["momentum_score"] = momentum
-    indicators["momentum_delta"] = delta
-    indicators["momentum_acceleration"] = acceleration
-    
-    # Generate labels
+    indicators["momentum_delta"] = momentum_delta(momentum)
+    indicators["momentum_acceleration"] = momentum_acceleration(indicators["momentum_delta"])
+    return indicators
+
+
+def build_live_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Features for live /signal evaluation.
+
+    Does NOT compute future-return labels, so the latest bars are kept.
+    Only drops indicator warmup NaNs at the start of the series.
+    """
+    features = _attach_momentum(df)
+    return features.dropna()
+
+
+def build_feature_matrix(df: pd.DataFrame, n_bars: int = 5, include_labels: bool = True):
+    """Build feature matrix.
+
+    Training default (include_labels=True) still drops the last n_bars so
+    labels have no lookahead leakage.
+
+    Live path should use include_labels=False or build_live_features().
+    """
+    features = _attach_momentum(df)
+
+    if not include_labels:
+        features = features.dropna()
+        return features, None
+
     labels = binary_label(df, n_bars=n_bars)
-    
-    # Combine features
-    features = indicators.copy()
-    
-    # Drop rows with NaN (first 200 periods for indicators, last n_bars for labels)
     valid_idx = features.dropna().index.intersection(labels.dropna().index)
     features = features.loc[valid_idx]
     labels = labels.loc[valid_idx]
-    
     return features, labels
