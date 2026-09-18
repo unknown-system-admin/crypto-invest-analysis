@@ -246,8 +246,8 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             recent_scores = None
 
         try:
-            embed = build_report_embed(symbol, summary, tf_results, 
-                                      momentum=mtrend, 
+            embed = build_report_embed(symbol, summary, tf_results,
+                                      momentum=mtrend,
                                       momentum_scores=recent_scores)
             ok = send_bot_message(embed)
             if ok:
@@ -277,14 +277,14 @@ def signal():
 
     from monitor.signal_bot import evaluate_symbol, now_str, DEFAULT_CFG
     from data_cache import load_or_fetch
-    from feature_engine.builder import build_feature_matrix
+    from feature_engine.builder import build_live_features
 
     cfg = {k: scfg.get(k, v) for k, v in DEFAULT_CFG.items()}
     results = []
     for symbol in CONFIG["symbols"]:
         try:
-            df = load_or_fetch(symbol, tf, limit=limit)
-            features, _ = build_feature_matrix(df, n_bars=5)
+            df = load_or_fetch(symbol, tf, limit=limit, refresh_latest=True)
+            features = build_live_features(df)
             res = evaluate_symbol(symbol, features, send_bot_message, cfg=cfg)
             results.append(res)
         except Exception as e:
