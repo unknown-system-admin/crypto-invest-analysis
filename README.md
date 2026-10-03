@@ -2,199 +2,60 @@
 
 加密貨幣投資分析系統 — 技術分析儀表板、策略回測、動能分析、Discord 自動報告。
 
+## 線上訊號規格（2026-10-03）
+
+`GET /signal` 是通知，不是回測重播，也不下單。
+
+看什麼：
+
+- 價格：OKX `fetch_ticker` 最新成交價。不用日線收盤，也不用歷史進場價。
+- 趨勢：最新一根 1d 動能分數與一日變化。權重 RSI 0.3 / MACD 0.1 / SMA20 0.4 / SMA50 0.2。
+- 不看持倉、不看冷卻、不重播歷史成交。
+
+判斷：
+
+- 做多：分數 > 0.05 且變化 > 0
+- 做空：分數 < -0.30 且變化 < 0
+- 其余：趨勢消失（平區）
+
+給什麼：
+
+- BTC 與 SOL 合併成一則 Discord。
+- 只有某一檔從做多/做空翻轉，或從做多/做空落出門檻（趨勢消失），才發送。
+- 兩邊都沒變、或第一次看到就是平區：不通知。
+- 掃描頻率來自外部排程（目前盤中每小時，加上日報時點），服務本身不輪詢。
+
+這與下方 walk-forward 回測不是同一套。回測有持倉與冷卻，數字仍有效，但不再當通知語意。
+
 ## 系統架構
 
-```
-                        ┌─────────────────────────────────────────┐
-                        │   Render (crypto-dashboard service)     │
-                        │   https://crypto-invest-analysis.onrender.com
-                        │                                         │
-   瀏覽器 ──────────────▶│  [Docker 容器] start.sh                 │
-                        │   ├─ Streamlit 儀表板 (port 8501, 對外) │
-                        │   │   └ app.py — 技術分析/回測/交易 UI   │
-                        │   │                                     │
-                        │   └─ FastAPI monitor (port 8000, 內部)   │
-                        │       └ monitor/main.py                  │
-                        │           ├─ GET /report  (市場日報)     │
-                        │           ├─ GET /check   (定時告警檢查) │
-                        │           ├─ GET /health  (健康檢查)      │
-                        │           └─ GET /debug/* (除錯端點)     │
-                        └───────────────────┬─────────────────────┘
-                                            │ Bot REST API
-                                            ▼
-                        ┌─────────────────────────────────────────┐
-                        │  Cloudflare Worker (反向代理)            │
-                        │  https://crypto-analysis-report.        │
-                        │  stevenwang890207.workers.dev           │
-                        │                                         │
-                        │  用途： bypass Discord 對 Render IP 的   │
-                        │  全域封鎖 (429 global rate limit)       │
-                        └───────────────────┬─────────────────────┘
-                                            │
-                                            ▼
-                        ┌─────────────────────────────────────────┐
-                        │  Discord Bot「Crypto Report#8575」       │
-                        │  → 伺服器 $$ 的 #常規 頻道               │
-                        └─────────────────────────────────────────┘
-```
+單容器：Streamlit 8501 對外，FastAPI monitor 8000 內部。Discord 經 Cloudflare Worker 轉發。
 
-### 單容器雙服務
+端點：`/health` `/report` `/check` `/signal`。
 
-Render 免費版只允許一個 service，所以 FastAPI 和 Streamlit 跑在同一個容器：
+## 動能分析
 
-- `start.sh` — 啟動腳本：背景跑 uvicorn (8000)，前景跑 streamlit (8501)
-- `Dockerfile.app` — 映像檔定義，EXPOSE 8000 + 8501
-- `render.yaml` — Render 部署設定（單一 `crypto-dashboard` service）
+- 動能分數：RSI 0.3、MACD 0.1、SMA20 0.4、SMA50 0.2，範圍約 -1 ~ +1
+- 報告顯示最近 4 個分數、變化、加速度
 
-### Discord 通知鏈
-
-```
-/report 請求 → 產生報告 embed → send_bot_message()
-    → Cloudflare Worker (?path=/channels/{id}/messages)
-    → Discord API v10 → #常規 頻道
-```
-
-**為什麼需要 Cloudflare Worker？**
-
-Discord 封鎖了 Render 免費版的共享 IP 段（太多免費服務打 Discord API 觸發全域 429），
-webhook 和 Bot REST API 都會被擋。Cloudflare Worker 的 IP 乾淨未被封鎖，
-扮演「轉發站」：Render → Worker → Discord。免費額度每天 10 萬次請求，遠超需求。
-
-**為什麼 token 用 base64 存在 config.yaml？**
-
-Render 環境變數設定後未正確注入容器（原因不明），
-改把 `DISCORD_BOT_TOKEN` / `DISCORD_CHANNEL_ID` base64 編碼後存於
-`monitor/config.yaml` 的 `bot_token_b64` / `channel_id_b64`，
-程式啟動時解碼。環境變數仍優先（如有設定）。
-
-## 專案結構
-
-```
-├── app.py                  # Streamlit 儀表板（技術分析/回測/投資組合 UI）
-├── start.sh                # 容器啟動腳本（uvicorn 背景 + streamlit 前景）
-├── Dockerfile.app          # 單容器映像（Render 部署用）
-├── render.yaml             # Render 服務定義
-│
-├── monitor/                # FastAPI 通知服務
-│   ├── main.py             #   端點：/report /check /health /debug/*
-│   ├── notifier.py         #   Discord Bot REST API（經 Worker 代理）+ webhook fallback
-│   ├── config.yaml         #   Discord 設定（token/challenge base64）、告警、策略參數
-│   └── checker.py / state.py
-│
-├── feature_engine/         # 特徵引擎
-│   ├── indicators.py       #   9 個技術指標（SMA20/50/200, EMA26, ATR, RSI, MACD, MFI, OBV）
-│   ├── momentum.py         #   動能分數（RSI 0.3 / MACD 0.1 / SMA20 0.4 / SMA50 0.2）
-│   ├── labels.py           #   動能標籤（防未來函數洩漏）
-│   └── builder.py          #   組裝特徵矩陣
-│
-├── backtest_engine/        # 回測引擎
-│   ├── engine.py           #   回測主體（含放空保證金機制）
-│   ├── rule_strategy.py    #   動能門檻策略（buy=0.08 / sell=-0.07）
-│   ├── model_strategy.py   #   ML 模型策略（RF/XGBoost）
-│   ├── short_strategy.py   #   放空策略（MomentumShort / MLShort）
-│   └── metrics.py          #   績效指標
-│
-├── data/                   # OKX 資料抓取（ccxt）
-├── analysis/               # 技術分析（多空訊號、動能趨勢、支撐壓力）
-├── trading/                # 模擬交易（paper trading）
-├── train_model.py          # 本地模型訓練 CLI
-├── data_cache/             # K 線 CSV 快取（BTC 2 年 1h 資料）
-├── tests/                  # 測試（pytest）
-└── reports/                # 視覺化回測報告（PNG）
-```
-
-## 動能分析（報告核心）
-
-- **動能分數**：加權組合（RSI 0.3、MACD 0.1、SMA20 0.4、SMA50 0.2），範圍 -1 ~ +1
-- **趨勢判定**：嚴格單調（不允許持平），`中→中→強` 視為「穩定/維持」
-- **報告顯示**：最近 4 個分數、1 階導數（變化率）、2 階導數（加速度）+ 中文解讀
-- **時間戳**：台灣時間（UTC+8）`🕐 YYYY/MM/DD HH:MM`
-
-## 觸發報告
+## 觸發
 
 ```bash
-# 手動觸發（冷啟動需等 60-90 秒）
-curl https://crypto-invest-analysis.onrender.com/report
-
-# 指定參數
+curl https://crypto-invest-analysis.onrender.com/signal
 curl "https://crypto-invest-analysis.onrender.com/report?tf=1d&step=1"
 ```
 
-## 本地開發
-
-```bash
-# 環境
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# 跑儀表板
-streamlit run app.py
-
-# 跑 monitor
-uvicorn monitor.main:app --port 8000
-
-# 訓練模型
-.venv/bin/python train_model.py --model rf --optimize
-
-# 測試
-.venv/bin/python -m pytest
-```
-
-## 已知限制
-
-- OKX API 無 API key 限 ~300 根 K 線（快取 + 分批抓取緩解）
-- Render 免費版 15 分鐘無流量休眠，首次請求需等冷啟動
-- OKX 歷史端點上限 1440 根 1d K 線（2022-09 起）
+冷啟動約 60–90 秒。
 
 ## 策略驗證結果（2026-09，多折 walk-forward）
 
-**採用配置（兩資產通用，1d）**：`buy=0.05, sell=-0.30, short_entry=-0.30(同sell), cooldown=3, trend_filter=True(簡單版), strong_filter=False, min_holding=0, dd_stop=50, pos=95%`
+回測配置（不是線上通知規則）：`buy=0.05, sell=-0.30, short_entry=-0.30, cooldown=3, trend_filter=True, strong_filter=False, min_holding=0, dd_stop=50, pos=95%`
 
 | 資產 | 固定配置（OOS 3 折複合） | B&H | 逐折重選 grid |
 |------|----------------------|-----|--------------|
 | BTC | **+15.41%** | -17.53% | -28.37% |
-| SOL | **+11.86%**（BTC 配置直接轉移） | -38.80% | -30.25% |
+| SOL | **+11.86%** | -38.80% | -30.25% |
 
-結論：
-1. **固定配置在 6 折中 5 折正報酬**（BTC fold2 -14%，其餘全正），兩資產複合皆正且大幅跑贏 B&H
-2. **逐折重新選參數會過擬合** — 樣本外反而虧損；參數應凍結，不要定期重選
-3. 誠實聲明：BTC 數字部分為重疊樣本（配置源自含測試期的全樣本 grid）；**SOL 是乾淨的跨資產轉移驗證**（+11.86% vs B&H -38.80%）
-4. 2022 引擎權益 bug（持倉權益漏算持倉市值 → 假回撤觸發停損螺旋）已修復；修復前所有回測數字（含 -99.3%）作廢
+參數凍結。逐折重選會過擬合。SOL 是跨資產轉移驗證。
 
-**已驗證否決的改進**（walk-forward 證實更差，勿用）：
-- 拆分門檻（`short_entry=-0.15` 提前放空）：牛市誤放空 → 熊市獲利抵不過牛市虧損（BTC +15.41% → -27.87%）
-- SMA_50 強過濾（`strong_filter=True`）：延遲牛市再進場，買在更高點
-- 教訓：深度 -0.30 放空門檻不是 bug，是紀律 — 只在動能真正崩潰時放空才是可靠下跌預測
-- 上述能力保留為策略/引擎參數（`short_entry_threshold`、`strong_filter`），預設關閉
-
-## HFT 槓桿機器人（OKX demo）
-
-本地執行的日內機器人（`bot/`），混合訊號（1h 動能方向 + 15m 動能 delta），5x 逐倉槓桿。
-
-```bash
-# 訊號模式（不下單）
-python -m bot.run_bot --dry-run
-
-# OKX demo 模式（需設定 OKX_API_KEY / OKX_API_SECRET / OKX_API_PASSPHRASE）
-python -m bot.run_bot --live
-```
-
-風險控制：單日 -10% 強制停、單筆 -2.5% 停損、每資產 1 倉、崩潰重啟對帳。
-⚠️ 尚未實作：`--live` 開機對帳（載入 state 後需呼叫 executor.get_open_symbols() 校正實際倉位）。上 `--live` 前必須先實作。
-⚠️ 尚未實作：下單冪等性（spec 要求；若 `open_long` 拋錯但交易所已接受，state 未更新會重複進場）。上 `--live` 前必須一併實作。
-⚠️ M1 v2 校準（2026-09-06，Binance 3 個月 15m/1h 資料 + ATR 追蹤停損 + 波動率過濾）：
-**混合訊號仍無明顯 edge** — 最佳配置 BTC -0.4% / SOL +6.5%，交易數 17-26（<100，統計無意義），
-且最佳配置完全不使用波動率過濾器。日內動能（1h 方向 + 15m delta）在實測資料上無法賺錢，
-與已驗證有效的 1d 策略（BTC +15.4% / SOL +11.9% OOS）差異巨大。上真錢前必須先解決訊號問題。
-
-⚠️ M1 v3 校準（均值回歸，2026-09-06，Binance 3 個月 15m/1h）：RSI 超賣/超買 + SMA_50 趨勢過濾
-兩資產皆正（BTC +1.9% / SOL +4.9%），但 3 個月僅 11-12 筆交易，統計上無意義。
-三次日內校準（動能 v1/v2、均值回歸 v3）皆未通過「交易數>=100」門檻 —
-日內（15m）訊號在目前方法下未能證明有 edge。已驗證有效的仍是 1d 策略。
-
-⚠️ M1 v4 校準（資金費率 contrarian 濾網，2026-09-06）：費率從未越過門檻（本窗口低溢價，
-BTC 全程 ±0.0001），濾網完全無作用 — 結果與 v3 相同（BTC +1.9% / SOL +4.9%，11-12 筆）。
-contrarian 費率訊號需牛市高費率才觸發，此窗口不適用。**日內四策略皆未通過驗證；已驗證有效的仍只有 1d 策略。**
-
-詳細設計見 `docs/superpowers/specs/2026-09-06-hft-bot-design.md`。
+已否決：`short_entry=-0.15`、`strong_filter=True`。日內 bot 四次校準皆未過交易數 >= 100，不上真錢。
