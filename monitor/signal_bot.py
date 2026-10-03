@@ -1,12 +1,7 @@
 """Live signal notifier.
 
-Price is the exchange last trade, not the daily close and not a historical fill.
-No virtual position. Regime:
-  long  if score > buy and delta > 0
-  short if score < sell and delta < 0
-  flat  otherwise
-Discord fires on a new long/short and when an active regime disappears.
-Flat with no prior regime is silent.
+Price is the exchange last trade. No virtual position.
+BTC and SOL are sent in one Discord message when any regime changes.
 """
 
 import json
@@ -29,11 +24,7 @@ DEFAULT_CFG = dict(
     pos=95,
 )
 
-ACTIONS = {
-    "long": ("\U0001f7e2", "\u505a\u591a\u8a0a\u865f", 0x00FF00),
-    "short": ("\U0001f534", "\u505a\u7a7a\u8a0a\u865f", 0xFF0000),
-    "flat": ("\u26aa", "\u8da8\u52e2\u6d88\u5931", 0xAAAAAA),
-}
+LABELS = {"long": "做多", "short": "做空", "flat": "趨勢消失"}
 
 
 def load_signal_state(path: Path = SIGNAL_STATE_PATH) -> dict:
@@ -90,53 +81,68 @@ def compute_latest_signal(features, symbol: str, buy=0.05, sell=-0.30, **_ignore
     }
 
 
-def build_signal_embed(symbol: str, sig: dict, previous: str = None) -> dict:
-    emoji, label, color = ACTIONS.get(sig["action"], ("\U0001f514", sig["action"], 0xAAAAAA))
-    lines = [
-        f"**{symbol}** {label}",
-        f"\U0001f4b0 \u7576\u4e0b\u6700\u65b0\u6210\u4ea4\u50f9\uff1a${sig['price']:,.2f}",
-        f"\U0001f4ca \u8da8\u52e2\u5206\u6578 {sig['score']:.3f} \u00b7 \u8b8a\u5316 {sig.get('delta', 0):+.3f}",
-        f"\u9580\u6abb\uff1a\u505a\u591a > {sig.get('buy_threshold', 0.05):.2f} \u4e14\u8b8a\u5316>0 \u00b7 \u505a\u7a7a < {sig.get('sell_threshold', -0.30):.2f} \u4e14\u8b8a\u5316<0",
-    ]
-    if sig["action"] == "flat" and previous:
-        lines.append(f"\u5148\u524d\u8da8\u52e2\uff1a{previous} \u2192 \u5df2\u843d\u51fa\u9580\u6abb")
-    lines.append("\n\U0001f449 \u8acb\u81ea\u884c\u81f3 OKX \u4e0b\u55ae\uff08\u901a\u77e5\uff0c\u975e\u81ea\u52d5\u57f7\u884c\uff09")
-    return {"embeds": [{"title": f"{emoji} {symbol} \u7b56\u7565\u8a0a\u865f", "description": "\n".join(lines), "color": color}]}
+def _line(symbol: str, sig: dict, previous: str = None, changed: bool = False) -> str:
+    label = LABELS.get(sig.get("action"), sig.get("action"))
+    mark = "◆ " if changed else ""
+    text = (
+        f"{mark}**{symbol}** {label} · ${sig['price']:,.2f}\n"
+        f"分數 {sig['score']:.3f} · 變化 {sig.get('delta', 0):+.3f}"
+    )
+    if changed and previous and previous != sig.get("action"):
+        text += f"\n{LABELS.get(previous, previous)} → {label}"
+    return text
 
 
-def evaluate_symbol(symbol: str, features, send_fn, path=SIGNAL_STATE_PATH, cfg: dict = None) -> dict:
+def build_basket_embed(rows: list) -> dict:
+    changed = [r for r in rows if r.get("changed")]
+    title = "策略訊號 · " + " / ".join(r["symbol"].split("/")[0] for r in rows)
+    lines = [_line(r["symbol"], r["sig"], r.get("previous"), r.get("changed")) for r in rows]
+    lines.append("\n門檻：做多 > 0.05 且變化>0 · 做空 < -0.30 且變化<0")
+    lines.append("◆ 為本次變更。沒標記的是同次狀態，供對照。")
+    lines.append("\n👉 請自行至 OKX 下單（通知，非自動執行）")
+    color = 0x00FF00 if any(r["sig"].get("action") == "long" for r in changed) else 0xFF0000 if any(r["sig"].get("action") == "short" for r in changed) else 0xAAAAAA
+    return {"embeds": [{"title": title, "description": "\n".join(lines), "color": color}]}
+
+
+def evaluate_basket(items, send_fn, path=SIGNAL_STATE_PATH, cfg: dict = None) -> dict:
+    """items: [{symbol, features}]. One Discord message if any regime changes."""
     cfg = cfg or DEFAULT_CFG
-    sig = compute_latest_signal(features, symbol, buy=cfg["buy"], sell=cfg["sell"])
     state = load_signal_state(path)
-    prev = state.get(symbol, {})
-    prev_action = prev.get("action")
-    regime = sig.get("action")
-    payload = {
-        "symbol": symbol,
-        "verdict": sig.get("verdict"),
-        "signal": regime or "none",
-        "price": sig.get("price"),
-        "score": sig.get("score"),
-        "delta": sig.get("delta"),
-        "candle_close": sig.get("candle_close"),
-        "notified": False,
-    }
-    if not regime:
-        payload["reason"] = "no_data"
-        return payload
-    if prev_action == regime:
-        payload["reason"] = "unchanged"
-        return payload
-    # First observation of flat: nothing to clear, stay silent.
-    if regime == "flat" and prev_action not in ("long", "short"):
-        state[symbol] = {"action": "flat", "price": sig.get("price"), "at": now_str()}
+    results = []
+    rows = []
+    for item in items:
+        symbol = item["symbol"]
+        try:
+            sig = compute_latest_signal(item["features"], symbol, buy=cfg["buy"], sell=cfg["sell"])
+        except Exception as e:
+            results.append({"symbol": symbol, "error": str(e), "notified": False})
+            continue
+        prev = state.get(symbol, {}).get("action")
+        regime = sig.get("action")
+        changed = bool(regime) and prev != regime and not (regime == "flat" and prev not in ("long", "short"))
+        results.append({
+            "symbol": symbol,
+            "verdict": sig.get("verdict"),
+            "signal": regime or "none",
+            "price": sig.get("price"),
+            "score": sig.get("score"),
+            "delta": sig.get("delta"),
+            "candle_close": sig.get("candle_close"),
+            "changed": changed,
+            "notified": False,
+        })
+        if regime:
+            rows.append({"symbol": symbol, "sig": sig, "previous": prev, "changed": changed})
+            state[symbol] = {"action": regime, "price": sig.get("price"), "at": now_str()}
+    if any(r["changed"] for r in rows):
+        ok = bool(send_fn(build_basket_embed(rows)))
+        for r in results:
+            if r.get("changed"):
+                r["notified"] = ok
         save_signal_state(state, path)
-        payload["reason"] = "no_signal"
-        return payload
-    payload["notified"] = bool(send_fn(build_signal_embed(symbol, sig, previous=prev_action)))
-    state[symbol] = {"action": regime, "price": sig.get("price"), "at": now_str()}
-    save_signal_state(state, path)
-    return payload
+    else:
+        save_signal_state(state, path)
+    return {"results": results, "notified": [r["symbol"] for r in results if r.get("notified")]}
 
 
 def now_str() -> str:
