@@ -31,7 +31,6 @@ CONFIG_PATH = Path(__file__).parent / "config.yaml"
 with open(CONFIG_PATH) as f:
     CONFIG = yaml.safe_load(f)
 
-# Decode base64 bot token and channel ID
 def _decode_b64(val: str) -> str:
     try:
         return base64.b64decode(val).decode()
@@ -83,7 +82,6 @@ def check():
         new_sig = result["signals"]
         old_sym_state = today_state.get(symbol, {})
 
-        # Level 1: trend reversal
         reversal = check_reversal(old_sym_state, new_sig, cfg["trend_reversal"])
         if reversal:
             changes = {"RSI": f"{result['subplots']['rsi']['RSI'].iloc[-1]:.1f}"}
@@ -94,15 +92,13 @@ def check():
             except Exception:
                 pass
 
-        # Level 2: strong signal
         try:
             strong = check_strong_signal(symbol, old_sym_state, new_sig, cfg["strong_signal_threshold"])
         except Exception as e:
             errors.append(f"{symbol}: check_strong_signal failed: {e}")
             strong = None
         if strong:
-            embed = build_strong_signal_embed(symbol, strong["direction"],
-                                              strong["bullish"], strong["total"])
+            embed = build_strong_signal_embed(symbol, strong["direction"], strong["bullish"], strong["total"])
             try:
                 send_webhook(webhook, embed)
                 alerts_sent.append(f"{symbol}: strong {strong['direction']}")
@@ -110,73 +106,51 @@ def check():
             except Exception:
                 pass
 
-        # Level 3: trading strategy evaluation
         trading_cfg = CONFIG.get("trading", {})
         if trading_cfg.get("strategies"):
             mode = trading_cfg.get("mode", "paper")
             risk = trading_cfg.get("risk", DEFAULT_RISK)
             threshold = risk.get("signal_threshold", 0.6)
-
             strategy = CustomComposite(trading_cfg["strategies"], threshold=threshold)
             store = PortfolioStore()
             portfolio = store.load()
-
             signal = strategy.evaluate(result["overlay"], result["subplots"])
             if signal and signal.direction != "中立":
                 current_price = float(result["overlay"]["close"].iloc[-1])
                 has_pos = any(p.symbol == symbol for p in portfolio.positions)
-
                 if mode == "live":
                     import ccxt
                     exchange = ccxt.binance()
                     executor = LiveExecutor(portfolio, exchange=exchange)
                 else:
                     executor = PaperExecutor(portfolio)
-
                 today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                 daily_count = sum(1 for o in portfolio.orders if o.timestamp.startswith(today_str))
-
                 if signal.direction == "偏多" and not has_pos and executor.can_trade(symbol, daily_count, risk.get("max_daily_trades", 10)):
                     qty = calculate_position_size(portfolio.cash, current_price, risk.get("max_position_pct", 25))
                     if qty > 0:
                         order = executor.execute_buy(symbol, current_price, qty)
-                        embed = {
-                            "embeds": [{
-                                "title": f"🟢 {symbol} 買入訊號",
-                                "description": f"價格: ${current_price:,.2f}\n數量: {qty}\n信心: {signal.confidence:.0%}",
-                                "color": 0x00FF00,
-                            }]
-                        }
+                        embed = {"embeds": [{"title": f"🟢 {symbol} 買入訊號", "description": f"價格: ${current_price:,.2f}\n數量: {qty}\n信心: {signal.confidence:.0%}", "color": 0x00FF00}]}
                         try:
                             send_webhook(webhook, embed)
                             alerts_sent.append(f"{symbol}: BUY signal")
                         except Exception:
                             pass
-
                 elif signal.direction == "偏空" and has_pos and executor.can_trade(symbol, daily_count, risk.get("max_daily_trades", 10)):
                     pos_list = [p for p in portfolio.positions if p.symbol == symbol]
                     if pos_list:
                         pos = pos_list[0]
                         order = executor.execute_sell(symbol, current_price, pos.quantity)
                         if order:
-                            embed = {
-                                "embeds": [{
-                                    "title": f"🔴 {symbol} 賣出訊號",
-                                    "description": f"價格: ${current_price:,.2f}\n數量: {pos.quantity}\n損益: ${order.pnl:+.2f} ({order.pnl_pct:+.2f}%)",
-                                    "color": 0xFF0000,
-                                }]
-                            }
+                            embed = {"embeds": [{"title": f"🔴 {symbol} 賣出訊號", "description": f"價格: ${current_price:,.2f}\n數量: {pos.quantity}\n損益: ${order.pnl:+.2f} ({order.pnl_pct:+.2f}%)", "color": 0xFF0000}]}
                             try:
                                 send_webhook(webhook, embed)
                                 alerts_sent.append(f"{symbol}: SELL signal (PnL: ${order.pnl:+.2f})")
                             except Exception:
                                 pass
-
                 for p in portfolio.positions:
                     p.update_market(current_price)
-
                 store.save(portfolio)
-
         today_state[symbol] = new_sig
 
     state[today_key] = today_state
@@ -208,10 +182,8 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
     rcfg = CONFIG.get("reports", {})
     tf = tf or rcfg.get("default_tf", "1d")
     step = step or rcfg.get("default_step", 1)
-    webhook = CONFIG["discord"]["webhook_url"]
     reports_sent = []
     errors = []
-
     for symbol in CONFIG["symbols"]:
         try:
             df = fetch_ohlcv(symbol, timeframe=tf, limit=220)
@@ -238,17 +210,13 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             from feature_engine.momentum import momentum_score
             from feature_engine.indicators import compute_all_indicators
             df_ind = compute_all_indicators(df)
-            df_ind['close'] = df['close']  # Add close column for momentum_score
+            df_ind["close"] = df["close"]
             scores = momentum_score(df_ind)
-            # Get last 4 scores for evolution display
             recent_scores = scores.dropna().tolist()[-4:] if len(scores.dropna()) >= 4 else scores.dropna().tolist()
-        except Exception as e:
+        except Exception:
             recent_scores = None
-
         try:
-            embed = build_report_embed(symbol, summary, tf_results,
-                                      momentum=mtrend,
-                                      momentum_scores=recent_scores)
+            embed = build_report_embed(symbol, summary, tf_results, momentum=mtrend, momentum_scores=recent_scores)
             ok = send_bot_message(embed)
             if ok:
                 reports_sent.append(symbol)
@@ -256,9 +224,7 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
                 errors.append(f"{symbol}: send_bot_message failed")
         except Exception as e:
             errors.append(f"{symbol}: send failed: {e}")
-    return {"status": "ok",
-            "reports": reports_sent, "errors": errors,
-            "time": datetime.now(timezone.utc).isoformat()}
+    return {"status": "ok", "reports": reports_sent, "errors": errors, "time": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/health")
@@ -268,66 +234,48 @@ def health():
 
 @app.get("/signal")
 def signal():
-    """Evaluate validated strategy on latest daily data; notify Discord on NEW signals."""
+    """One combined BTC+SOL notification when any live regime changes."""
     scfg = CONFIG.get("signal", {})
     if not scfg.get("enabled", True):
         return {"status": "disabled"}
     tf = scfg.get("timeframe", "1d")
     limit = scfg.get("candles", 300)
-
-    from monitor.signal_bot import evaluate_symbol, now_str, DEFAULT_CFG
+    from monitor.signal_bot import evaluate_basket, now_str, DEFAULT_CFG
     from data_cache import load_or_fetch
     from feature_engine.builder import build_live_features
-
     cfg = {k: scfg.get(k, v) for k, v in DEFAULT_CFG.items()}
-    results = []
+    items = []
+    errors = []
     for symbol in CONFIG["symbols"]:
         try:
             df = load_or_fetch(symbol, tf, limit=limit, refresh_latest=True)
-            features = build_live_features(df)
-            res = evaluate_symbol(symbol, features, send_bot_message, cfg=cfg)
-            results.append(res)
+            items.append({"symbol": symbol, "features": build_live_features(df)})
         except Exception as e:
-            results.append({"symbol": symbol, "error": str(e)})
-
-    notified = [r["symbol"] for r in results if r.get("notified")]
-    return {"status": "ok", "results": results, "notified": notified,
-            "time": now_str()}
+            errors.append({"symbol": symbol, "error": str(e)})
+    basket = evaluate_basket(items, send_bot_message, cfg=cfg)
+    return {"status": "ok", "results": basket["results"] + errors, "notified": basket["notified"], "time": now_str()}
 
 
 @app.get("/debug/webhook")
 def debug_webhook():
     webhook = CONFIG["discord"]["webhook_url"]
-    import httpx
     try:
         resp = httpx.get(webhook, timeout=10)
-        return {
-            "webhook_url_prefix": webhook[:80] + "...",
-            "discord_status": resp.status_code,
-            "discord_body": resp.text[:500],
-        }
+        return {"webhook_url_prefix": webhook[:80] + "...", "discord_status": resp.status_code, "discord_body": resp.text[:500]}
     except Exception as e:
-        return {
-            "webhook_url_prefix": webhook[:80] + "...",
-            "error": str(e),
-        }
+        return {"webhook_url_prefix": webhook[:80] + "...", "error": str(e)}
 
 
 @app.get("/debug/bot")
 def debug_bot():
-    import base64
-    all_keys = list(os.environ.keys())
-    
     bot_token = CONFIG.get("discord", {}).get("bot_token", "")
     channel_id = CONFIG.get("discord", {}).get("channel_id", "")
-    
     result = {
-        "total_env_vars": len(all_keys),
+        "total_env_vars": len(list(os.environ.keys())),
         "bot_token_prefix": bot_token[:20] + "..." if bot_token else "EMPTY",
         "channel_id": channel_id if channel_id else "EMPTY",
         "config_source": "env" if os.environ.get("DISCORD_BOT_TOKEN") else "b64_decode",
     }
-    
     if bot_token and channel_id:
         url = f"https://discord.com/api/v10/channels/{channel_id}/messages"
         headers = {"Authorization": f"Bot {bot_token}"}
@@ -337,5 +285,4 @@ def debug_bot():
             result["test_body"] = resp.text[:300]
         except Exception as e:
             result["test_error"] = str(e)
-    
     return result
