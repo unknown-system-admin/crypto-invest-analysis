@@ -1,22 +1,18 @@
-"""Strategy signal notification bot.
+"""Live signal notifier.
 
-Replays the validated momentum strategy over daily data and notifies via
-Discord ONLY when a new entry/exit signal fires (deduplicated by trade date).
-Tracks a virtual position per symbol so signals are state-consistent with
-the backtest. This is a NOTIFICATION bot, not an execution bot — the user
-places orders manually on OKX.
+Price is the exchange last trade. No virtual position.
+BTC and SOL are sent in one Discord message when any regime changes.
 """
 
 import json
-from pathlib import Path
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 
-from backtest_engine.engine import BacktestEngine
-from backtest_engine.rule_strategy import MomentumRuleStrategy
+import ccxt
 
 SIGNAL_STATE_PATH = Path(__file__).parent / "signal_state.json"
 
-# Validated config (see README strategy section) — frozen, do not re-tune.
 DEFAULT_CFG = dict(
     buy=0.05,
     sell=-0.30,
@@ -28,12 +24,7 @@ DEFAULT_CFG = dict(
     pos=95,
 )
 
-ACTIONS = {
-    "buy": ("🟢", "買入訊號（開多單）", 0x00FF00),
-    "short_sell": ("🔴", "放空訊號（開空單）", 0xFF0000),
-    "sell": ("⚪", "平多訊號（出場）", 0xAAAAAA),
-    "cover": ("⚪", "平空訊號（出場）", 0xAAAAAA),
-}
+LABELS = {"long": "做多", "short": "做空", "flat": "趨勢消失"}
 
 
 def load_signal_state(path: Path = SIGNAL_STATE_PATH) -> dict:
@@ -48,143 +39,110 @@ def save_signal_state(data: dict, path: Path = SIGNAL_STATE_PATH) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def _bar_date(idx) -> str:
-    ts = pd_timestamp(idx)
-    return ts.strftime("%Y-%m-%d")
+def fetch_last_price(symbol: str) -> float:
+    exchange = ccxt.okx({
+        "apiKey": os.getenv("OKX_API_KEY"),
+        "secret": os.getenv("OKX_API_SECRET"),
+        "password": os.getenv("OKX_API_PASSPHRASE"),
+        "enableRateLimit": True,
+    })
+    ticker = exchange.fetch_ticker(symbol)
+    last = ticker.get("last") or ticker.get("close")
+    if last is None:
+        raise RuntimeError(f"no last price for {symbol}")
+    return float(last)
 
 
-def pd_timestamp(idx):
-    import pandas as pd
-    ts = pd.Timestamp(idx)
-    if ts.tzinfo is None:
-        ts = ts.tz_localize("UTC")
-    return ts.tz_convert("UTC")
+def _regime(score: float, delta: float, buy: float, sell: float):
+    if score > buy and delta > 0:
+        return "long"
+    if score < sell and delta < 0:
+        return "short"
+    return "flat"
 
 
-def _is_forming_daily(idx) -> bool:
-    """True if this 1d candle has not reached the next UTC midnight."""
-    ts = pd_timestamp(idx)
-    now = datetime.now(timezone.utc)
-    return now < (ts + pd_timedelta_days(1))
-
-
-def pd_timedelta_days(n: int):
-    from datetime import timedelta
-    return timedelta(days=n)
-
-
-def compute_latest_signal(features, buy=0.05, sell=-0.30, cooldown=3,
-                          trend_filter=True, strong_filter=False,
-                          min_holding=0, dd_stop=50, pos=95):
-    """Replay the strategy over `features`; return the most recent trade.
-
-    Also attaches last-bar metadata so callers can distinguish signal-bar
-    fill from the latest close.
-    """
-    last_bar = features.iloc[-1]
-    last_idx = features.index[-1]
-    last_close = float(last_bar.get("close", 0) or 0)
-    last_score = float(last_bar.get("momentum_score", 0) or 0)
-    meta = {
-        "last_bar_date": _bar_date(last_idx),
-        "last_close": last_close,
-        "last_score": last_score,
-        "forming": _is_forming_daily(last_idx),
-        "bars": int(len(features)),
-    }
-
-    engine = BacktestEngine(
-        strategy=MomentumRuleStrategy(buy_threshold=buy, sell_threshold=sell),
-        initial_capital=10000,
-        timeframe="1d",
-        max_position_pct=pos,
-        max_drawdown_stop=dd_stop,
-        trend_filter=trend_filter,
-        strong_filter=strong_filter,
-        min_holding_bars=min_holding,
-        cooldown_bars=cooldown,
-    )
-    result = engine.run(features)
-    if not result.trades:
-        return {"action": None, **meta}
-
-    last = result.trades[-1]
+def compute_latest_signal(features, symbol: str, buy=0.05, sell=-0.30, **_ignored):
+    if features is None or len(features) == 0:
+        return {"action": None, "verdict": "no_data"}
+    bar = features.iloc[-1]
+    score = float(bar.get("momentum_score", 0) or 0)
+    delta = float(bar.get("momentum_delta", 0) or 0)
+    price = fetch_last_price(symbol)
+    regime = _regime(score, delta, buy, sell)
     return {
-        "action": last["action"],
-        "date": last.get("date", ""),
-        "price": last["price"],
-        "score": last.get("score", 0),
-        "reason": last.get("reason"),
-        "pnl": last.get("pnl"),
-        **meta,
+        "action": regime,
+        "verdict": "signal" if regime != "flat" else "flat",
+        "price": price,
+        "score": score,
+        "delta": delta,
+        "buy_threshold": buy,
+        "sell_threshold": sell,
+        "candle_close": float(bar.get("close", 0) or 0),
     }
 
 
-def build_signal_embed(symbol: str, sig: dict) -> dict:
-    emoji, label, color = ACTIONS.get(sig["action"], ("🔔", sig["action"], 0xAAAAAA))
-    lines = [f"**{symbol}** {label}"]
-    lines.append(f"📅 訊號K（UTC）：{sig['date']}")
-    lines.append(f"💰 訊號進場價：${sig['price']:,.2f}")
-    if sig.get("last_close") is not None:
-        forming = "（形成中）" if sig.get("forming") else "（已收盤）"
-        lines.append(f"📊 最新收盤{forming}：${sig['last_close']:,.2f} · {sig.get('last_bar_date', '')}")
-    lines.append(f"📊 訊號當根動能：{sig['score']:.3f}")
-    if sig.get("reason") == "drawdown_stop":
-        lines.append("⚠️ 因最大回撤停損出場")
-    if sig.get("pnl") is not None:
-        lines.append(f"📈 平倉損益：${sig['pnl']:+,.2f}")
-    lines.append("\n👉 請自行至 OKX 下單（此為通知，非自動執行）")
-    return {"embeds": [{"title": f"{emoji} {symbol} 策略訊號", "description": "\n".join(lines), "color": color}]}
-
-
-def evaluate_symbol(symbol: str, features, send_fn, path=SIGNAL_STATE_PATH,
-                    cfg: dict = None) -> dict:
-    """Evaluate one symbol, notify on NEW signal, update state. Returns result dict."""
-    cfg = cfg or DEFAULT_CFG
-    sig = compute_latest_signal(
-        features,
-        buy=cfg["buy"], sell=cfg["sell"], cooldown=cfg["cooldown"],
-        trend_filter=cfg["trend_filter"], strong_filter=cfg["strong_filter"],
-        min_holding=cfg["min_holding"], dd_stop=cfg["dd_stop"], pos=cfg["pos"],
+def _line(symbol: str, sig: dict, previous: str = None, changed: bool = False) -> str:
+    label = LABELS.get(sig.get("action"), sig.get("action"))
+    mark = "◆ " if changed else ""
+    text = (
+        f"{mark}**{symbol}** {label} · ${sig['price']:,.2f}\n"
+        f"分數 {sig['score']:.3f} · 變化 {sig.get('delta', 0):+.3f}"
     )
+    if changed and previous and previous != sig.get("action"):
+        text += f"\n{LABELS.get(previous, previous)} → {label}"
+    return text
 
+
+def build_basket_embed(rows: list) -> dict:
+    changed = [r for r in rows if r.get("changed")]
+    title = "策略訊號 · " + " / ".join(r["symbol"].split("/")[0] for r in rows)
+    lines = [_line(r["symbol"], r["sig"], r.get("previous"), r.get("changed")) for r in rows]
+    lines.append("\n門檻：做多 > 0.05 且變化>0 · 做空 < -0.30 且變化<0")
+    lines.append("◆ 為本次變更。沒標記的是同次狀態，供對照。")
+    lines.append("\n👉 請自行至 OKX 下單（通知，非自動執行）")
+    color = 0x00FF00 if any(r["sig"].get("action") == "long" for r in changed) else 0xFF0000 if any(r["sig"].get("action") == "short" for r in changed) else 0xAAAAAA
+    return {"embeds": [{"title": title, "description": "\n".join(lines), "color": color}]}
+
+
+def evaluate_basket(items, send_fn, path=SIGNAL_STATE_PATH, cfg: dict = None) -> dict:
+    """items: [{symbol, features}]. One Discord message if any regime changes."""
+    cfg = cfg or DEFAULT_CFG
     state = load_signal_state(path)
-    prev = state.get(symbol, {})
-    prev_date = prev.get("date", "")
-    prev_action = prev.get("action", "")
-
-    base = {
-        "symbol": symbol,
-        "last_bar_date": sig.get("last_bar_date"),
-        "last_close": sig.get("last_close"),
-        "forming": sig.get("forming"),
-        "bars": sig.get("bars"),
-    }
-
-    if not sig.get("action"):
-        return {**base, "signal": "none", "notified": False}
-
-    new_signal = sig["date"] > prev_date and sig["action"] != prev_action
-
-    payload = {
-        **base,
-        "signal": sig["action"],
-        "date": sig["date"],
-        "price": sig["price"],
-        "score": sig.get("score"),
-    }
-
-    if new_signal:
-        embed = build_signal_embed(symbol, sig)
-        ok = send_fn(embed)
-        state[symbol] = {"date": sig["date"], "action": sig["action"], "price": sig["price"]}
+    results = []
+    rows = []
+    for item in items:
+        symbol = item["symbol"]
+        try:
+            sig = compute_latest_signal(item["features"], symbol, buy=cfg["buy"], sell=cfg["sell"])
+        except Exception as e:
+            results.append({"symbol": symbol, "error": str(e), "notified": False})
+            continue
+        prev = state.get(symbol, {}).get("action")
+        regime = sig.get("action")
+        changed = bool(regime) and prev != regime and not (regime == "flat" and prev not in ("long", "short"))
+        results.append({
+            "symbol": symbol,
+            "verdict": sig.get("verdict"),
+            "signal": regime or "none",
+            "price": sig.get("price"),
+            "score": sig.get("score"),
+            "delta": sig.get("delta"),
+            "candle_close": sig.get("candle_close"),
+            "changed": changed,
+            "notified": False,
+        })
+        if regime:
+            rows.append({"symbol": symbol, "sig": sig, "previous": prev, "changed": changed})
+            state[symbol] = {"action": regime, "price": sig.get("price"), "at": now_str()}
+    if any(r["changed"] for r in rows):
+        ok = bool(send_fn(build_basket_embed(rows)))
+        for r in results:
+            if r.get("changed"):
+                r["notified"] = ok
         save_signal_state(state, path)
-        payload["notified"] = ok
-        return payload
-
-    payload["notified"] = False
-    payload["reason"] = "already_notified"
-    return payload
+    else:
+        save_signal_state(state, path)
+    return {"results": results, "notified": [r["symbol"] for r in results if r.get("notified")]}
 
 
 def now_str() -> str:
