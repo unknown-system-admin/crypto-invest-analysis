@@ -21,7 +21,7 @@ from monitor.checker import check_reversal, check_strong_signal
 from monitor.notifier import (
     build_reversal_embed,
     build_strong_signal_embed,
-    build_report_embed,
+    build_combined_report_embed,
     send_webhook,
     send_bot_message,
 )
@@ -179,10 +179,11 @@ def check_debug():
 
 @app.get("/report")
 def report(tf: Optional[str] = None, step: Optional[int] = None):
+    """One Discord message covering every configured symbol."""
     rcfg = CONFIG.get("reports", {})
     tf = tf or rcfg.get("default_tf", "1d")
     step = step or rcfg.get("default_step", 1)
-    reports_sent = []
+    sections = []
     errors = []
     for symbol in CONFIG["symbols"]:
         try:
@@ -215,16 +216,24 @@ def report(tf: Optional[str] = None, step: Optional[int] = None):
             recent_scores = scores.dropna().tolist()[-4:] if len(scores.dropna()) >= 4 else scores.dropna().tolist()
         except Exception:
             recent_scores = None
+        sections.append({
+            "symbol": symbol,
+            "summary": summary,
+            "tf_results": tf_results,
+            "momentum": mtrend,
+            "momentum_scores": recent_scores,
+        })
+    reports_sent = []
+    if sections:
         try:
-            embed = build_report_embed(symbol, summary, tf_results, momentum=mtrend, momentum_scores=recent_scores)
-            ok = send_bot_message(embed)
-            if ok:
-                reports_sent.append(symbol)
+            embed = build_combined_report_embed(sections)
+            if send_bot_message(embed):
+                reports_sent = [s["symbol"] for s in sections]
             else:
-                errors.append(f"{symbol}: send_bot_message failed")
+                errors.append("send_bot_message failed")
         except Exception as e:
-            errors.append(f"{symbol}: send failed: {e}")
-    return {"status": "ok", "reports": reports_sent, "errors": errors, "time": datetime.now(timezone.utc).isoformat()}
+            errors.append(f"send failed: {e}")
+    return {"status": "ok", "combined": True, "reports": reports_sent, "errors": errors, "time": datetime.now(timezone.utc).isoformat()}
 
 
 @app.get("/health")
