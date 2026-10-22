@@ -2,40 +2,51 @@
 
 加密貨幣投資分析系統 — 技術分析儀表板、策略回測、動能分析、Discord 自動報告。
 
+## 通知規格（2026-10-22）
+
+詳細見 `docs/superpowers/specs/2026-10-03-live-signal.md`。
+
+- `GET /report`：市場日報，每次都發。BTC 與 SOL 合併成一則，標題「市場日報 — BTC / SOL」。回傳 `combined: true`。
+- `GET /signal`：策略訊號，不是回測重播。價格用 OKX 最新成交價，不看持倉。做多：分數 > 0.05 且變化 > 0；做空：分數 < -0.30 且變化 < 0；從做多/做空掉出門檻發「趨勢消失」。BTC 與 SOL 一則，沒變不發。
+- `GET /check`：轉折與強訊號，與上面兩套獨立。
+
+日報時點（台灣）：08:30 / 12:00 / 15:00 / 18:00 / 21:00 / 23:00。盤中掃描 09:00–23:00 每小時。服務本身不輪詢。
+
 ## 系統架構
 
 ```
-                        ┌─────────────────────────────────────────┐
+                        ┌────────────────────────────────────────┐
                         │   Render (crypto-dashboard service)     │
                         │   https://crypto-invest-analysis.onrender.com
                         │                                         │
-   瀏覽器 ──────────────▶│  [Docker 容器] start.sh                 │
+   瀏覽器 ─────────────▶│  [Docker 容器] start.sh                 │
                         │   ├─ Streamlit 儀表板 (port 8501, 對外) │
                         │   │   └ app.py — 技術分析/回測/交易 UI   │
                         │   │                                     │
                         │   └─ FastAPI monitor (port 8000, 內部)   │
                         │       └ monitor/main.py                  │
-                        │           ├─ GET /report  (市場日報)     │
+                        │           ├─ GET /report  (合併市場日報) │
+                        │           ├─ GET /signal  (合併策略訊號) │
                         │           ├─ GET /check   (定時告警檢查) │
                         │           ├─ GET /health  (健康檢查)      │
                         │           └─ GET /debug/* (除錯端點)     │
-                        └───────────────────┬─────────────────────┘
+                        └───────────────────┬────────────────────┘
                                             │ Bot REST API
                                             ▼
-                        ┌─────────────────────────────────────────┐
+                        ┌──────────────────────────────────────────┐
                         │  Cloudflare Worker (反向代理)            │
                         │  https://crypto-analysis-report.        │
                         │  stevenwang890207.workers.dev           │
                         │                                         │
                         │  用途： bypass Discord 對 Render IP 的   │
                         │  全域封鎖 (429 global rate limit)       │
-                        └───────────────────┬─────────────────────┘
+                        └────────────────────┬────────────────────┘
                                             │
                                             ▼
-                        ┌─────────────────────────────────────────┐
+                        ┌──────────────────────────────────────────┐
                         │  Discord Bot「Crypto Report#8575」       │
                         │  → 伺服器 $$ 的 #常規 頻道               │
-                        └─────────────────────────────────────────┘
+                        └──────────────────────────────────────────┘
 ```
 
 ### 單容器雙服務
@@ -49,7 +60,7 @@ Render 免費版只允許一個 service，所以 FastAPI 和 Streamlit 跑在同
 ### Discord 通知鏈
 
 ```
-/report 請求 → 產生報告 embed → send_bot_message()
+/report 或 /signal → 產生合併 embed → send_bot_message()
     → Cloudflare Worker (?path=/channels/{id}/messages)
     → Discord API v10 → #常規 頻道
 ```
@@ -76,9 +87,10 @@ Render 環境變數設定後未正確注入容器（原因不明），
 ├── render.yaml             # Render 服務定義
 │
 ├── monitor/                # FastAPI 通知服務
-│   ├── main.py             #   端點：/report /check /health /debug/*
+│   ├── main.py             #   端點：/report /signal /check /health /debug/*
 │   ├── notifier.py         #   Discord Bot REST API（經 Worker 代理）+ webhook fallback
-│   ├── config.yaml         #   Discord 設定（token/challenge base64）、告警、策略參數
+│   ├── signal_bot.py       #   無持倉的當下價動能訊號，BTC+SOL 一則
+│   ├── config.yaml         #   Discord 設定（token/channel base64）、告警、策略參數
 │   └── checker.py / state.py
 │
 ├── feature_engine/         # 特徵引擎
@@ -89,7 +101,7 @@ Render 環境變數設定後未正確注入容器（原因不明），
 │
 ├── backtest_engine/        # 回測引擎
 │   ├── engine.py           #   回測主體（含放空保證金機制）
-│   ├── rule_strategy.py    #   動能門檻策略（buy=0.08 / sell=-0.07）
+│   ├── rule_strategy.py    #   動能門檻策略（buy=0.05 / sell=-0.30）
 │   ├── model_strategy.py   #   ML 模型策略（RF/XGBoost）
 │   ├── short_strategy.py   #   放空策略（MomentumShort / MLShort）
 │   └── metrics.py          #   績效指標
@@ -113,11 +125,11 @@ Render 環境變數設定後未正確注入容器（原因不明），
 ## 觸發報告
 
 ```bash
-# 手動觸發（冷啟動需等 60-90 秒）
-curl https://crypto-invest-analysis.onrender.com/report
-
-# 指定參數
+# 合併日報（冷啟動需等 60-90 秒）
 curl "https://crypto-invest-analysis.onrender.com/report?tf=1d&step=1"
+
+# 策略訊號（沒變化不發 Discord）
+curl https://crypto-invest-analysis.onrender.com/signal
 ```
 
 ## 本地開發
@@ -149,7 +161,7 @@ uvicorn monitor.main:app --port 8000
 
 ## 策略驗證結果（2026-09，多折 walk-forward）
 
-**採用配置（兩資產通用，1d）**：`buy=0.05, sell=-0.30, short_entry=-0.30(同sell), cooldown=3, trend_filter=True(簡單版), strong_filter=False, min_holding=0, dd_stop=50, pos=95%`
+**回測配置（不是線上通知規則）**：`buy=0.05, sell=-0.30, short_entry=-0.30(同sell), cooldown=3, trend_filter=True(簡單版), strong_filter=False, min_holding=0, dd_stop=50, pos=95%`
 
 | 資產 | 固定配置（OOS 3 折複合） | B&H | 逐折重選 grid |
 |------|----------------------|-----|--------------|
